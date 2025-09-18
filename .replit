@@ -15,10 +15,6 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 35713
-externalPort = 3000
-
-[[ports]]
 localPort = 8080
 externalPort = 8080
 
@@ -35,55 +31,11 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Start application"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Go Backend Test"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Go Backend"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Go Mining Backend"
 
-[[workflows.workflow]]
-name = "Start application"
-author = "agent"
-
 [[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"
-
-[[workflows.workflow]]
-name = "Go Backend Test"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd go-backend && PORT=8080 DATABASE_URL=$DATABASE_URL go run main.go"
-waitForPort = 8080
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow]]
-name = "Go Backend"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd go-backend && PORT=8080 go run main.go"
-waitForPort = 8080
-
-[workflows.workflow.metadata]
-outputType = "console"
+task = "workflow.run"
+args = "Frontend Application"
 
 [[workflows.workflow]]
 name = "Go Mining Backend"
@@ -96,6 +48,18 @@ outputType = "console"
 task = "shell.exec"
 args = "cd go-backend && go run main.go"
 waitForPort = 8080
+
+[[workflows.workflow]]
+name = "Frontend Application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "VITE_API_URL=https://186114ec-1d5e-477d-9f55-7c87869bbadd-00-333dllo34h734.spock.replit.dev:8080 npm run dev"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
 
 [agent]
 integrations = ["javascript_database==1.0.0"]
