@@ -14,6 +14,14 @@ run = ["npm", "run", "start"]
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 35713
+externalPort = 3000
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
 [env]
 PORT = "5000"
 
@@ -29,6 +37,10 @@ author = "agent"
 task = "workflow.run"
 args = "Start application"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Go Backend Test"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -40,6 +52,18 @@ waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow]]
+name = "Go Backend Test"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd go-backend && PORT=8080 DATABASE_URL=$DATABASE_URL go run main.go"
+waitForPort = 8080
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [agent]
 integrations = ["javascript_database==1.0.0"]
