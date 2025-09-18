@@ -394,7 +394,9 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
       
       streamRef.current = stream;
       
+      console.log('videoRef.current:', videoRef.current);
       if (videoRef.current) {
+        console.log('Setting video srcObject...');
         videoRef.current.srcObject = stream;
         
         // Direct approach that works in iframe contexts
@@ -403,13 +405,23 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
         videoRef.current.muted = true;
         videoRef.current.autoplay = true;
         
-        // Immediate success - bypass video events that can hang in iframes
-        setTimeout(() => {
-          console.log('Camera initialized successfully, proceeding to next step');
-          setIsInitializing(false);
-          setCurrentStep('position-face');
-          speak('Position Your Face In The Frame!');
-        }, 500);
+        // Force play immediately
+        try {
+          await videoRef.current.play();
+          console.log('Video play() succeeded');
+        } catch (playErr) {
+          console.log('Video play() failed but continuing:', playErr);
+        }
+        
+        // Always proceed regardless of play() success  
+        console.log('Camera initialized successfully, proceeding to next step');
+        setIsInitializing(false);
+        setCurrentStep('position-face');
+        speak('Position Your Face In The Frame!');
+      } else {
+        console.error('videoRef.current is null!');
+        setIsInitializing(false);
+        setError('Video element not ready. Please try again.');
       }
       
     } catch (err: any) {

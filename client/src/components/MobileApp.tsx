@@ -18,6 +18,7 @@ import GlobalPage from "@/pages/global-page";
 import BtcMiningPage from "@/pages/btc-mining";
 import { ProtectedRoute } from "@/lib/protected-route";
 import LoadingScreen from "./LoadingScreen";
+import FaceKYC from "./FaceKYC";
 
 export default function MobileApp() {
   const { user } = useAuth();
@@ -97,6 +98,7 @@ export default function MobileApp() {
           <ProtectedRoute path="/btc-mining" component={BtcMiningPage} />
           <Route path="/whitepaper" component={Whitepaper} />
           <Route path="/global" component={GlobalPage} />
+          <Route path="/test-kyc" component={() => <FaceKYC onComplete={(data) => console.log('KYC Complete:', data)} onBack={() => window.history.back()} />} />
           <ProtectedRoute path="/admin" component={AdminPage} />
         </Switch>
       </div>
