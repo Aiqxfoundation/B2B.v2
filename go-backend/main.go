@@ -858,7 +858,7 @@ func main() {
         log.Printf("Database connected successfully")
         log.Printf("Ready to handle mining operations!")
         
-        if err := http.ListenAndServe("0.0.0.0:"+port, r); err != nil {
+        if err := http.ListenAndServe("localhost:"+port, r); err != nil {
                 log.Fatal("Failed to start server:", err)
         }
 }

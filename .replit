@@ -14,10 +14,6 @@ run = ["npm", "run", "start"]
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 8080
-externalPort = 8080
-
 [env]
 PORT = "5000"
 
@@ -55,7 +51,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "VITE_API_URL=https://186114ec-1d5e-477d-9f55-7c87869bbadd-00-333dllo34h734.spock.replit.dev:8080 npm run dev"
+args = "npm run dev"
 waitForPort = 5000
 
 [workflows.workflow.metadata]
