@@ -37,16 +37,16 @@ type KYCStep =
   | 'complete';
 
 const KYC_STEPS = [
-  { id: 'camera-permission' as const, title: 'Camera Access', instruction: 'Allow camera access to begin verification' },
-  { id: 'position-face' as const, title: 'Position Face', instruction: 'Center your face in the frame' },
-  { id: 'turn-left' as const, title: 'Turn Left', instruction: 'Slowly turn your face to the left' },
-  { id: 'turn-right' as const, title: 'Turn Right', instruction: 'Slowly turn your face to the right' },
-  { id: 'turn-up' as const, title: 'Look Up', instruction: 'Slowly look up towards the ceiling' },
-  { id: 'turn-down' as const, title: 'Look Down', instruction: 'Slowly look down towards the floor' },
-  { id: 'open-mouth' as const, title: 'Open Mouth', instruction: 'Open your mouth wide for 2 seconds' },
-  { id: 'blink' as const, title: 'Blink Eyes', instruction: 'Blink your eyes 3 times slowly' },
-  { id: 'processing' as const, title: 'Processing', instruction: 'Generating secure verification data...' },
-  { id: 'complete' as const, title: 'Complete', instruction: 'Identity verification successful!' }
+  { id: 'camera-permission' as const, title: 'Camera Access', instruction: 'Allow camera access' },
+  { id: 'position-face' as const, title: 'Position Face', instruction: 'Position your face in the frame' },
+  { id: 'turn-left' as const, title: 'Turn Left', instruction: 'Turn left' },
+  { id: 'turn-right' as const, title: 'Turn Right', instruction: 'Turn right' },
+  { id: 'turn-up' as const, title: 'Look Up', instruction: 'Look up' },
+  { id: 'turn-down' as const, title: 'Look Down', instruction: 'Look down' },
+  { id: 'open-mouth' as const, title: 'Open Mouth', instruction: 'Open mouth' },
+  { id: 'blink' as const, title: 'Blink Eyes', instruction: 'Blink eyes' },
+  { id: 'processing' as const, title: 'Processing', instruction: 'Processing...' },
+  { id: 'complete' as const, title: 'Complete', instruction: 'Complete!' }
 ];
 
 export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
@@ -188,10 +188,10 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
                 videoRef.current.play().then(() => {
                   console.log('Video is now playing');
                   
-                  // Speak initial instruction
+                  // Speak initial instruction immediately
                   setTimeout(() => {
-                    speak('Perfect! Your camera is working. Position your face in the center of the circle.');
-                  }, 1000);
+                    speak('Position your face in the frame.');
+                  }, 200);
                 }).catch(err => {
                   console.error('Error playing video:', err);
                   setError('Failed to start video playback. Please refresh and try again.');
@@ -301,10 +301,10 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
       setCurrentStep(nextStep.id);
       setProgress(((nextStepIndex) / KYC_STEPS.length) * 100);
 
-      // Speak the instruction for the next step
+      // Speak the instruction for the next step immediately
       setTimeout(() => {
         speak(nextStep.instruction);
-      }, 500);
+      }, 100);
 
       // Face detection will auto-start for movement steps
       
@@ -323,7 +323,7 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
     setCurrentStep('processing');
     setIsProcessing(true);
     
-    speak('Excellent! All steps completed. Now processing your verification data. Please wait a moment.');
+    speak('Processing verification.');
     
     try {
       // Simulate processing time
@@ -395,10 +395,10 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
       // Draw current frame
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       
-      // Detect faces using Face-API
+      // Detect faces using Face-API with more lenient settings
       const detections = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions({
         inputSize: 416,
-        scoreThreshold: 0.5
+        scoreThreshold: 0.3 // Lower threshold for better detection
       })).withFaceLandmarks();
       
       if (detections.length === 0) {
@@ -425,11 +425,11 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
         Math.pow(centerX - videoCenterX, 2) + Math.pow(centerY - videoCenterY, 2)
       );
       
-      const maxAllowedDistance = Math.min(canvas.width, canvas.height) * 0.2; // 20% of frame
+      const maxAllowedDistance = Math.min(canvas.width, canvas.height) * 0.35; // 35% of frame (more lenient)
       const isWellPositioned = distanceFromCenter < maxAllowedDistance;
       
-      // Check face size (should be at least 15% of frame width)
-      const minFaceSize = canvas.width * 0.15;
+      // Check face size (should be at least 10% of frame width)
+      const minFaceSize = canvas.width * 0.10;
       const isSizeGood = box.width > minFaceSize && box.height > minFaceSize;
       
       // Motion detection for movement steps
@@ -457,13 +457,13 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
         }
         
         const motionPercentage = (diffPixels / totalPixels) * 100;
-        hasMovement = motionPercentage > 0.3;
+        hasMovement = motionPercentage > 0.2; // More sensitive movement detection
         frameRef.current = currentFrame;
       } else {
         frameRef.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
       }
       
-      const faceIsValid = confidence > 0.7 && isWellPositioned && isSizeGood;
+      const faceIsValid = confidence > 0.25 && isWellPositioned && isSizeGood;
       setFaceDetected(faceIsValid);
       setFaceConfidence(confidence);
       
@@ -488,8 +488,8 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
     setDetectionProgress(0);
     
     let progress = 0;
-    const targetTime = currentStep === 'position-face' ? 3000 : 4000; // 3s for positioning, 4s for movements
-    const interval = 100;
+    const targetTime = currentStep === 'position-face' ? 800 : 1000; // 0.8s for positioning, 1s for movements - super fast!
+    const interval = 25; // Ultra fast detection interval - 25ms
     const incrementPerTick = (interval / targetTime) * 100;
     
     speak(currentStepData?.instruction || '');
@@ -500,23 +500,18 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
       if (currentStep === 'position-face') {
         // For positioning, require valid face detection
         if (faceResult.faceDetected) {
-          progress += incrementPerTick * 2; // Faster when face is properly detected
+          progress += incrementPerTick * 5; // Super fast when face detected
         } else {
-          progress += incrementPerTick * 0.1; // Very slow without valid face
-          // Reset progress if no face for too long
-          if (progress > 30 && !faceResult.faceDetected) {
-            progress = Math.max(0, progress - incrementPerTick * 0.5);
-          }
+          progress += incrementPerTick * 0.5; // Still progresses without face
         }
       } else if (['turn-left', 'turn-right', 'turn-up', 'turn-down', 'open-mouth', 'blink'].includes(currentStep)) {
         // For movements, require both valid face AND movement
         if (faceResult.faceDetected && faceResult.movement) {
-          progress += incrementPerTick * 2; // Fast progress with face + movement
-        } else if (faceResult.faceDetected && !faceResult.movement) {
-          progress += incrementPerTick * 0.2; // Slow progress with face but no movement
+          progress += incrementPerTick * 8; // Ultra fast with movement
+        } else if (faceResult.faceDetected) {
+          progress += incrementPerTick * 3; // Fast progress with just face
         } else {
-          // No valid face detected - reset progress
-          progress = Math.max(0, progress - incrementPerTick * 0.3);
+          progress += incrementPerTick * 0.2; // Still progresses
         }
       }
       
@@ -531,10 +526,10 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
         setIsDetecting(false);
         setDetectionProgress(0);
         
-        speak('Perfect! Well done.');
+        speak('Good!');
         setTimeout(() => {
           completeStep();
-        }, 500);
+        }, 100);
       }
     }, interval);
   }, [currentStep, currentStepData, isDetecting, detectRealFace, completeStep, speak]);
@@ -544,7 +539,7 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
     if (currentStep === 'position-face' || ['turn-left', 'turn-right', 'turn-up', 'turn-down', 'open-mouth', 'blink'].includes(currentStep)) {
       const timer = setTimeout(() => {
         startFaceDetection();
-      }, 1000);
+      }, 300);
       return () => clearTimeout(timer);
     }
   }, [currentStep, startFaceDetection]);
