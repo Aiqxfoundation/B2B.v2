@@ -61,6 +61,8 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
   const [stepProgress, setStepProgress] = useState(0);
   const [consecutiveValidFrames, setConsecutiveValidFrames] = useState(0);
   const [hasPlayedMovementSound, setHasPlayedMovementSound] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   const currentStepIndex = KYC_STEPS.findIndex(step => step.id === currentStep);
   const currentStepData = KYC_STEPS[currentStepIndex];
@@ -352,70 +354,106 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
     };
   }, [currentStep, consecutiveValidFrames, stepProgress, hasPlayedMovementSound, detectFace, playSuccessSound, playMovementSound, speak, completeCurrentStep]);
 
-  // Initialize camera with better error handling for Replit environment
+  // Initialize camera with mobile-optimized error handling
   const initializeCamera = async () => {
     try {
       setError(null);
-      speak('Starting camera. Please allow permissions.');
+      console.log('initializeCamera called - checking environment...');
       
-      // Check if getUserMedia is available
+      // Environment checks
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Camera API not supported in this browser');
+        console.error('getUserMedia not available');
+        setError('Camera not supported by this browser. Please use a modern browser.');
+        return;
       }
 
-      // Check if we're in a secure context
-      if (!window.isSecureContext) {
-        console.warn('Not in secure context, camera may not work');
-      }
+      console.log('Environment check passed, requesting permissions...');
+      speak('Starting camera. Please allow permissions.');
       
+      // Mobile-optimized constraints with fallbacks
       const constraints = {
         video: {
-          width: { ideal: 640, min: 480 },
-          height: { ideal: 480, min: 360 },
+          width: { ideal: 640, min: 320 },
+          height: { ideal: 480, min: 240 },
           facingMode: 'user',
-          frameRate: { ideal: 15, max: 30 }
+          frameRate: { ideal: 15, max: 25 }
         },
         audio: false
       };
 
-      console.log('Requesting camera access...');
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('getUserMedia constraints:', constraints);
+      
+      // Add timeout for mobile browsers that hang
+      const streamPromise = navigator.mediaDevices.getUserMedia(constraints);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Camera request timeout')), 10000)
+      );
+      
+      const stream = await Promise.race([streamPromise, timeoutPromise]) as MediaStream;
+      console.log('Camera stream obtained:', stream);
+      
       streamRef.current = stream;
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        
+        // Force video to load and play
         videoRef.current.onloadedmetadata = () => {
+          console.log('Video metadata loaded');
           if (videoRef.current) {
             videoRef.current.play().then(() => {
-              console.log('Camera started successfully');
+              console.log('Video playing successfully');
+              setIsInitializing(false);
               setCurrentStep('position-face');
               speak('Position Your Face In The Frame!');
             }).catch(err => {
               console.error('Video play error:', err);
-              setError('Failed to start video. Please refresh and try again.');
+              setIsInitializing(false);
+              setError('Failed to start video playback.');
             });
           }
         };
+        
+        videoRef.current.onerror = (err) => {
+          console.error('Video element error:', err);
+          setIsInitializing(false);
+          setError('Video error occurred. Please try again.');
+        };
+        
+        // Force load
+        videoRef.current.load();
       }
       
     } catch (err: any) {
-      console.error('Camera error details:', err);
-      let errorMessage = 'Camera access failed. Please allow camera permissions and try again.';
+      console.error('Camera initialization failed:', err);
+      
+      let errorMessage = 'Camera access failed.';
       
       if (err.name === 'NotAllowedError') {
-        errorMessage = 'Camera permission denied. Please click "Allow" when prompted for camera access.';
+        errorMessage = 'Camera permission denied. Please allow camera access in your browser settings and refresh the page.';
       } else if (err.name === 'NotFoundError') {
-        errorMessage = 'No camera found. Please ensure you have a camera connected.';
+        errorMessage = 'No camera found. Please ensure your device has a camera.';
       } else if (err.name === 'NotSupportedError') {
-        errorMessage = 'Camera not supported by this browser.';
+        errorMessage = 'Camera not supported. Please use a different browser.';
       } else if (err.name === 'NotReadableError') {
-        errorMessage = 'Camera is already in use by another application.';
-      } else if (err.message.includes('secure context')) {
-        errorMessage = 'Camera requires secure connection. Please try refreshing the page.';
+        errorMessage = 'Camera is busy. Please close other apps using the camera and try again.';
+      } else if (err.message.includes('timeout')) {
+        errorMessage = 'Camera request timed out. Please try again or check your camera permissions.';
+      } else {
+        errorMessage = `Camera error: ${err.message || 'Unknown error'}. Please try refreshing the page.`;
       }
       
+      setIsInitializing(false);
       setError(errorMessage);
       speak(errorMessage);
+      
+      // Add retry mechanism for mobile
+      if (retryCount < 2) {
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+          setError(null);
+        }, 3000);
+      }
     }
   };
 
@@ -525,10 +563,18 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
               </div>
               <Button 
                 onClick={initializeCamera}
-                className="bg-[#f7931a] hover:bg-[#f7931a]/80 text-black font-semibold"
+                disabled={isInitializing}
+                className="bg-[#f7931a] hover:bg-[#f7931a]/80 text-black font-semibold disabled:opacity-50"
                 data-testid="button-start-camera"
               >
-                Start Camera
+                {isInitializing ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    Initializing Camera...
+                  </div>
+                ) : (
+                  <>Start Camera {retryCount > 0 && `(Attempt ${retryCount + 1})`}</>
+                )}
               </Button>
             </div>
           )}
