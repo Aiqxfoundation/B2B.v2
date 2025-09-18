@@ -15,10 +15,6 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 37083
-externalPort = 3000
-
-[[ports]]
 localPort = 43397
 externalPort = 3001
 
@@ -35,26 +31,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Go Mining Backend"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Frontend Application"
+args = "Start application"
 
 [[workflows.workflow]]
-name = "Go Mining Backend"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd go-backend && go run main.go"
-waitForPort = 8080
-
-[[workflows.workflow]]
-name = "Frontend Application"
+name = "Start application"
 author = "agent"
 
 [[workflows.workflow.tasks]]
