@@ -26,27 +26,21 @@ interface FaceKYCProps {
 
 type KYCStep = 
   | 'camera-permission'
-  | 'position-face'
   | 'turn-left'
-  | 'turn-right' 
-  | 'turn-up'
-  | 'turn-down'
+  | 'turn-right'
   | 'open-mouth'
   | 'blink'
   | 'processing'
   | 'complete';
 
 const KYC_STEPS = [
-  { id: 'camera-permission' as const, title: 'Camera Access', instruction: 'Allow camera access' },
-  { id: 'position-face' as const, title: 'Position Face', instruction: 'Position your face in the frame' },
-  { id: 'turn-left' as const, title: 'Turn Left', instruction: 'Turn left' },
-  { id: 'turn-right' as const, title: 'Turn Right', instruction: 'Turn right' },
-  { id: 'turn-up' as const, title: 'Look Up', instruction: 'Look up' },
-  { id: 'turn-down' as const, title: 'Look Down', instruction: 'Look down' },
-  { id: 'open-mouth' as const, title: 'Open Mouth', instruction: 'Open mouth' },
-  { id: 'blink' as const, title: 'Blink Eyes', instruction: 'Blink eyes' },
-  { id: 'processing' as const, title: 'Processing', instruction: 'Processing...' },
-  { id: 'complete' as const, title: 'Complete', instruction: 'Complete!' }
+  { id: 'camera-permission' as const, title: 'Camera Access', instruction: 'Allow camera access', icon: '📷' },
+  { id: 'turn-left' as const, title: 'Turn Left', instruction: 'Turn your head left', icon: '←' },
+  { id: 'turn-right' as const, title: 'Turn Right', instruction: 'Turn your head right', icon: '→' },
+  { id: 'open-mouth' as const, title: 'Open Mouth', instruction: 'Open your mouth', icon: '😮' },
+  { id: 'blink' as const, title: 'Blink', instruction: 'Blink your eyes', icon: '😉' },
+  { id: 'processing' as const, title: 'Processing', instruction: 'Processing...', icon: '⚡' },
+  { id: 'complete' as const, title: 'Complete', instruction: 'Verification complete!', icon: '✅' }
 ];
 
 export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
@@ -155,7 +149,7 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
       speak('Starting camera access. Please allow permissions when prompted.');
       
       // First change step to render video element
-      setCurrentStep('position-face');
+      setCurrentStep('turn-left');
       setProgress(10);
       
       // Wait for video element to render then initialize camera
@@ -190,7 +184,7 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
                   
                   // Speak initial instruction immediately
                   setTimeout(() => {
-                    speak('Position your face in the frame.');
+                    speak('Turn your head left.');
                   }, 200);
                 }).catch(err => {
                   console.error('Error playing video:', err);
@@ -301,10 +295,10 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
       setCurrentStep(nextStep.id);
       setProgress(((nextStepIndex) / KYC_STEPS.length) * 100);
 
-      // Speak the instruction for the next step immediately
+      // Speak next instruction (success sound will play from detection)
       setTimeout(() => {
         speak(nextStep.instruction);
-      }, 100);
+      }, 150);
 
       // Face detection will auto-start for movement steps
       
@@ -488,31 +482,46 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
     setDetectionProgress(0);
     
     let progress = 0;
-    const targetTime = currentStep === 'position-face' ? 800 : 1000; // 0.8s for positioning, 1s for movements - super fast!
-    const interval = 25; // Ultra fast detection interval - 25ms
-    const incrementPerTick = (interval / targetTime) * 100;
+    let validFrameCount = 0;
+    const targetTime = 500; // Realistic 500ms per step
+    const interval = 100; // More reasonable 100ms detection interval
+    const incrementPerTick = (interval / targetTime) * 100; // 20% per tick when valid
+    const requiredValidFrames = 2; // Need 2 consecutive valid detections
     
-    speak(currentStepData?.instruction || '');
+    // Don't speak instruction here - already spoken in completeStep
     
     detectionTimerRef.current = setInterval(async () => {
       const faceResult = await detectRealFace();
+      let isValidAction = false;
       
-      if (currentStep === 'position-face') {
-        // For positioning, require valid face detection
-        if (faceResult.faceDetected) {
-          progress += incrementPerTick * 5; // Super fast when face detected
-        } else {
-          progress += incrementPerTick * 0.5; // Still progresses without face
+      // Require face detection for all steps
+      if (!faceResult.faceDetected) {
+        validFrameCount = 0;
+        return; // Don't progress without face
+      }
+      
+      // Step-specific validation
+      if (currentStep === 'turn-left') {
+        // Simple movement validation for left turn
+        isValidAction = faceResult.movement && faceResult.position && faceResult.position.centerX < (canvasRef.current?.width || 640) * 0.4;
+      } else if (currentStep === 'turn-right') {
+        // Simple movement validation for right turn
+        isValidAction = faceResult.movement && faceResult.position && faceResult.position.centerX > (canvasRef.current?.width || 640) * 0.6;
+      } else if (currentStep === 'open-mouth') {
+        // For mouth opening, require significant movement (mouth landmarks would be better but this is simpler)
+        isValidAction = faceResult.movement && faceResult.confidence > 0.4;
+      } else if (currentStep === 'blink') {
+        // For blinking, require brief movement then stillness
+        isValidAction = faceResult.movement || validFrameCount > 0; // More lenient for blink
+      }
+      
+      if (isValidAction) {
+        validFrameCount++;
+        if (validFrameCount >= requiredValidFrames) {
+          progress += incrementPerTick;
         }
-      } else if (['turn-left', 'turn-right', 'turn-up', 'turn-down', 'open-mouth', 'blink'].includes(currentStep)) {
-        // For movements, require both valid face AND movement
-        if (faceResult.faceDetected && faceResult.movement) {
-          progress += incrementPerTick * 8; // Ultra fast with movement
-        } else if (faceResult.faceDetected) {
-          progress += incrementPerTick * 3; // Fast progress with just face
-        } else {
-          progress += incrementPerTick * 0.2; // Still progresses
-        }
+      } else {
+        validFrameCount = Math.max(0, validFrameCount - 1); // Gradual decay
       }
       
       progress = Math.min(progress, 100);
@@ -526,20 +535,25 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
         setIsDetecting(false);
         setDetectionProgress(0);
         
-        speak('Good!');
+        // Play success sound
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSaB0fPZdikAFmq88vLCciUFLYLQ88V6JwgYacHw3ot4CAsZY7Ht5qNMEQtPpOPxx2AeBSuC0vNcciQFLA==');
+        audio.volume = 0.5;
+        audio.play().catch(() => {});
+        
+        speak('Perfect!');
         setTimeout(() => {
           completeStep();
-        }, 100);
+        }, 200);
       }
     }, interval);
-  }, [currentStep, currentStepData, isDetecting, detectRealFace, completeStep, speak]);
+  }, [currentStep, isDetecting, detectRealFace, completeStep, speak]);
   
   // Auto-start detection when step changes
   useEffect(() => {
-    if (currentStep === 'position-face' || ['turn-left', 'turn-right', 'turn-up', 'turn-down', 'open-mouth', 'blink'].includes(currentStep)) {
+    if (['turn-left', 'turn-right', 'open-mouth', 'blink'].includes(currentStep)) {
       const timer = setTimeout(() => {
         startFaceDetection();
-      }, 300);
+      }, 100); // Start immediately - super fast!
       return () => clearTimeout(timer);
     }
   }, [currentStep, startFaceDetection]);
@@ -717,10 +731,7 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
                   </div>
                   <div className="space-y-2">
                     <p className="text-sm text-gray-400">
-                      {currentStep === 'position-face' 
-                        ? 'Keep your face centered in the circle'
-                        : 'Follow the instruction - movement detected automatically'
-                      }
+                      Follow the instruction - movement detected automatically
                     </p>
                     {faceApiLoaded && (
                       <div className="flex items-center justify-center gap-4 text-xs">
