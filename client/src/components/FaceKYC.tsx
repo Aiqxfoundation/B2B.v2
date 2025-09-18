@@ -3,20 +3,17 @@ import * as faceapi from 'face-api.js';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Camera, 
   CheckCircle, 
-  Circle, 
   AlertTriangle, 
   Shield, 
   ArrowLeft, 
   ArrowRight,
-  Eye,
-  RotateCcw,
-  Volume2,
-  VolumeX
+  ArrowUp,
+  ArrowDown,
+  Eye
 } from "lucide-react";
 
 interface FaceKYCProps {
@@ -26,390 +23,172 @@ interface FaceKYCProps {
 
 type KYCStep = 
   | 'camera-permission'
+  | 'position-face'
   | 'turn-left'
   | 'turn-right'
-  | 'open-mouth'
+  | 'turn-up'
+  | 'turn-down'
   | 'blink'
   | 'processing'
   | 'complete';
 
 const KYC_STEPS = [
-  { id: 'camera-permission' as const, title: 'Camera Access', instruction: 'Allow camera access', icon: '📷' },
-  { id: 'turn-left' as const, title: 'Turn Left', instruction: 'Turn your head left', icon: '←' },
-  { id: 'turn-right' as const, title: 'Turn Right', instruction: 'Turn your head right', icon: '→' },
-  { id: 'open-mouth' as const, title: 'Open Mouth', instruction: 'Open your mouth', icon: '😮' },
-  { id: 'blink' as const, title: 'Blink', instruction: 'Blink your eyes', icon: '😉' },
-  { id: 'processing' as const, title: 'Processing', instruction: 'Processing...', icon: '⚡' },
-  { id: 'complete' as const, title: 'Complete', instruction: 'Verification complete!', icon: '✅' }
+  { id: 'camera-permission' as const, title: 'Camera Access', instruction: 'Allow camera access' },
+  { id: 'position-face' as const, title: 'Position Face', instruction: 'Position Your Face In The Frame!' },
+  { id: 'turn-left' as const, title: 'Turn Left', instruction: 'Turn Your Face Slowly To Left' },
+  { id: 'turn-right' as const, title: 'Turn Right', instruction: 'Turn Your Face Slowly To Right' },
+  { id: 'turn-up' as const, title: 'Turn Up', instruction: 'Turn Your Face Slowly Up' },
+  { id: 'turn-down' as const, title: 'Turn Down', instruction: 'Turn Your Face Slowly Down' },
+  { id: 'blink' as const, title: 'Blink', instruction: 'Blink Your Eyes' },
+  { id: 'processing' as const, title: 'Processing', instruction: 'Processing...' },
+  { id: 'complete' as const, title: 'Complete', instruction: 'Verification Complete!' }
 ];
 
 export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const detectionRef = useRef<number | null>(null);
   
   const [currentStep, setCurrentStep] = useState<KYCStep>('camera-permission');
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
-  const [progress, setProgress] = useState(0);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [countdown, setCountdown] = useState<number | null>(null);
-  const [speechSupported, setSpeechSupported] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [detectionProgress, setDetectionProgress] = useState(0);
-  const [isDetecting, setIsDetecting] = useState(false);
-  const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const detectionTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const frameRef = useRef<ImageData | null>(null);
   const [faceApiLoaded, setFaceApiLoaded] = useState(false);
   const [faceDetected, setFaceDetected] = useState(false);
-  const [faceConfidence, setFaceConfidence] = useState(0);
+  const [faceQuality, setFaceQuality] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showVerified, setShowVerified] = useState(false);
+  const [stepProgress, setStepProgress] = useState(0);
+  const [consecutiveValidFrames, setConsecutiveValidFrames] = useState(0);
+  const [hasPlayedMovementSound, setHasPlayedMovementSound] = useState(false);
 
   const currentStepIndex = KYC_STEPS.findIndex(step => step.id === currentStep);
   const currentStepData = KYC_STEPS[currentStepIndex];
+  
+  // Calculate angles consistently - skip camera-permission step
+  const actualSteps = KYC_STEPS.slice(1); // Remove camera-permission for angle calculation
+  const segmentAngle = 360 / actualSteps.length;
+  const actualStepIndex = Math.max(0, currentStepIndex - 1); // Adjust for skipped camera-permission
+  const completedAngle = actualStepIndex * segmentAngle;
 
-  // Speech synthesis functionality
+  // Play success sound
+  const playSuccessSound = useCallback(() => {
+    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSaB0fPZdikAFmq88vLCciUFLYLQ88V6JwgYacHw3ot4CAsZY7Ht5qNMEQtPpOPxx2AeBSuC0vNcciQFLA==');
+    audio.volume = 0.6;
+    audio.play().catch(() => {});
+  }, []);
+
+  // Play movement detection sound (softer tick)
+  const playMovementSound = useCallback(() => {
+    const audio = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEEAC0hAQBdwwIAAgAEAGRhdGEPGwAAAICBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt5p5NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSaB0fPZdikAFmq88vLCciUFLYLQ88V6JwgYacHw3ot4CAVYrOjnqlgVDiON2/DgfSkFKYTW8NOIQAwZbLvt5Z5NEAxQp+PwtmMcBjiQ2O3MdfGgVHYoEqSSSLLXqkFGZnFDhIOEd7VdZ4+2rZZnqKOFgaatJlEwgdvxwxqLUJaQOm9bvGWpGVbhKmAyNGbsHJXR0jNhIDYD');
+    audio.volume = 0.3;
+    audio.play().catch(() => {});
+  }, []);
+
+  // Speak instruction
   const speak = useCallback((text: string) => {
-    if (!speechSupported || isSpeaking) return;
-    
     try {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.8;
-      utterance.pitch = 1;
-      utterance.volume = 0.8;
-      
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      
-      window.speechSynthesis.speak(utterance);
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        utterance.volume = 0.8;
+        window.speechSynthesis.speak(utterance);
+      }
     } catch (error) {
       console.error('Speech synthesis error:', error);
-      setIsSpeaking(false);
     }
-  }, [speechSupported, isSpeaking]);
+  }, []);
 
-  // Stop current speech
-  const stopSpeech = useCallback(() => {
-    if (speechSupported) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-    }
-  }, [speechSupported]);
-
-  // Load Face-API models
+  // Load Face-API models faster
   useEffect(() => {
     const loadFaceApiModels = async () => {
       try {
-        // Load face detection models from CDN
-        await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model');
-        await faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model');
-        await faceapi.nets.faceRecognitionNet.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model');
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model'),
+          faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model'),
+        ]);
         console.log('Face-API models loaded successfully');
         setFaceApiLoaded(true);
       } catch (error) {
         console.error('Failed to load Face-API models:', error);
-        // Fallback: still allow KYC but with warnings
         setFaceApiLoaded(false);
       }
     };
     
     loadFaceApiModels();
   }, []);
-  
-  // Check speech synthesis support
-  useEffect(() => {
-    const checkSpeechSupport = () => {
-      if ('speechSynthesis' in window) {
-        setSpeechSupported(true);
-        // Wait for voices to load
-        const voices = window.speechSynthesis.getVoices();
-        if (voices.length === 0) {
-          window.speechSynthesis.onvoiceschanged = () => {
-            setSpeechSupported(true);
-          };
-        }
-      }
-    };
+
+  // Calculate Eye Aspect Ratio for blink detection
+  const calculateEyeAspectRatio = useCallback((eyeLandmarks: faceapi.Point[]) => {
+    // Calculate distances between eye landmarks
+    const p1p5 = Math.sqrt(Math.pow(eyeLandmarks[1].x - eyeLandmarks[5].x, 2) + Math.pow(eyeLandmarks[1].y - eyeLandmarks[5].y, 2));
+    const p2p4 = Math.sqrt(Math.pow(eyeLandmarks[2].x - eyeLandmarks[4].x, 2) + Math.pow(eyeLandmarks[2].y - eyeLandmarks[4].y, 2));
+    const p0p3 = Math.sqrt(Math.pow(eyeLandmarks[0].x - eyeLandmarks[3].x, 2) + Math.pow(eyeLandmarks[0].y - eyeLandmarks[3].y, 2));
     
-    checkSpeechSupport();
+    // Eye Aspect Ratio formula
+    const ear = (p1p5 + p2p4) / (2.0 * p0p3);
+    return ear;
   }, []);
 
-  // Initialize camera
-  const initializeCamera = async () => {
-    try {
-      setError(null);
-      
-      // Check if getUserMedia is supported
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setError('Camera access is not supported in this browser. Please use a modern browser.');
-        return;
-      }
-
-      speak('Starting camera access. Please allow permissions when prompted.');
-      
-      // First change step to render video element
-      setCurrentStep('turn-left');
-      setProgress(10);
-      
-      // Wait for video element to render then initialize camera
-      setTimeout(async () => {
-        try {
-          // Simpler, more compatible constraints
-          const constraints = {
-            video: {
-              width: { ideal: 640 },
-              height: { ideal: 480 },
-              facingMode: 'user'
-            },
-            audio: false
-          };
-
-          console.log('Requesting camera access...');
-          const stream = await navigator.mediaDevices.getUserMedia(constraints);
-          console.log('Camera stream obtained:', stream);
-          
-          streamRef.current = stream;
-          
-          if (videoRef.current) {
-            console.log('Assigning stream to video element...');
-            videoRef.current.srcObject = stream;
-            
-            // Ensure video loads and plays
-            videoRef.current.onloadedmetadata = () => {
-              console.log('Video metadata loaded, playing video...');
-              if (videoRef.current) {
-                videoRef.current.play().then(() => {
-                  console.log('Video is now playing');
-                  
-                  // Speak initial instruction immediately
-                  setTimeout(() => {
-                    speak('Turn your head left.');
-                  }, 200);
-                }).catch(err => {
-                  console.error('Error playing video:', err);
-                  setError('Failed to start video playback. Please refresh and try again.');
-                });
-              }
-            };
-            
-            videoRef.current.onerror = (e) => {
-              console.error('Video element error:', e);
-              setError('Video playback error. Please refresh and try again.');
-            };
-          } else {
-            console.error('Video element not found');
-            setError('Video element not ready. Please try again.');
-            // Stop the camera stream before resetting
-            if (streamRef.current) {
-              streamRef.current.getTracks().forEach(track => track.stop());
-              streamRef.current = null;
-            }
-            // Reset to camera permission step if video element not found
-            setCurrentStep('camera-permission');
-            setProgress(0);
-          }
-        } catch (err: any) {
-          console.error('Camera initialization error:', err);
-          let errorMessage = '';
-          if (err.name === 'NotAllowedError') {
-            errorMessage = 'Camera permission denied. Please allow camera access and try again.';
-          } else if (err.name === 'NotFoundError') {
-            errorMessage = 'No camera found. Please ensure your device has a camera.';
-          } else if (err.name === 'NotReadableError') {
-            errorMessage = 'Camera is busy. Please close other apps using the camera.';
-          } else {
-            errorMessage = 'Camera access failed. Please refresh and try again.';
-          }
-          
-          setError(errorMessage);
-          speak(errorMessage);
-          // Reset to camera permission step on error
-          setCurrentStep('camera-permission');
-          setProgress(0);
-        }
-      }, 150); // Small delay to ensure video element is rendered
-      
-    } catch (err: any) {
-      console.error('Initial camera setup error:', err);
-      setError('Failed to initialize camera setup. Please refresh and try again.');
-      speak('Failed to initialize camera setup. Please refresh and try again.');
-    }
-  };
-
-  // Generate device fingerprint and verification hash (no biometric data stored)
-  const generateKYCData = useCallback(async (): Promise<{ deviceFingerprint: string; verificationHash: string }> => {
-    // Create device fingerprint from various non-biometric sources
-    const deviceInfo = {
-      userAgent: navigator.userAgent,
-      language: navigator.language,
-      platform: navigator.platform,
-      hardwareConcurrency: navigator.hardwareConcurrency,
-      deviceMemory: (navigator as any).deviceMemory || 0,
-      colorDepth: screen.colorDepth,
-      pixelDepth: screen.pixelDepth,
-      screenResolution: `${screen.width}x${screen.height}`,
-      timezoneOffset: new Date().getTimezoneOffset(),
-      timestamp: Date.now()
-    };
-
-    // Generate fingerprint hash
-    const fingerprintData = JSON.stringify(deviceInfo);
-    const fingerprintBuffer = new TextEncoder().encode(fingerprintData);
-    const fingerprintHashBuffer = await crypto.subtle.digest('SHA-256', fingerprintBuffer);
-    const fingerprintHash = Array.from(new Uint8Array(fingerprintHashBuffer))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
-    // Generate verification hash (represents completed KYC process without storing biometric data)
-    const verificationData = {
-      kycCompleted: true,
-      stepsCompleted: Array.from(completedSteps),
-      deviceFingerprint: fingerprintHash,
-      verificationTime: new Date().toISOString(),
-      sessionId: crypto.randomUUID()
-    };
-
-    const verificationDataString = JSON.stringify(verificationData);
-    const verificationBuffer = new TextEncoder().encode(verificationDataString);
-    const verificationHashBuffer = await crypto.subtle.digest('SHA-256', verificationBuffer);
-    const verificationHash = Array.from(new Uint8Array(verificationHashBuffer))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
-    return {
-      deviceFingerprint: fingerprintHash,
-      verificationHash
-    };
-  }, [completedSteps]);
-
-  // Complete current step
-  const completeStep = useCallback(() => {
-    const newCompleted = new Set(completedSteps);
-    newCompleted.add(currentStep);
-    setCompletedSteps(newCompleted);
-
-    const nextStepIndex = currentStepIndex + 1;
-    if (nextStepIndex < KYC_STEPS.length) {
-      const nextStep = KYC_STEPS[nextStepIndex];
-      setCurrentStep(nextStep.id);
-      setProgress(((nextStepIndex) / KYC_STEPS.length) * 100);
-
-      // Speak next instruction (success sound will play from detection)
-      setTimeout(() => {
-        speak(nextStep.instruction);
-      }, 150);
-
-      // Face detection will auto-start for movement steps
-      
-      // Trigger processing when reaching processing step
-      if (nextStep.id === 'processing') {
-        setTimeout(() => {
-          processKYC();
-        }, 1000);
-      }
-    }
-  }, [currentStep, currentStepIndex, completedSteps, speak]);
-
-
-  // Process KYC completion
-  const processKYC = async () => {
-    setCurrentStep('processing');
-    setIsProcessing(true);
+  // Calculate head pose using landmarks
+  const calculateHeadPose = useCallback((landmarks: faceapi.FaceLandmarks68) => {
+    const nose = landmarks.getNose()[3]; // Nose tip
+    const leftEye = landmarks.getLeftEye()[0]; // Left eye corner
+    const rightEye = landmarks.getRightEye()[3]; // Right eye corner
+    const mouth = landmarks.getMouth()[0]; // Left mouth corner
     
-    speak('Processing verification.');
+    // Calculate eye center
+    const eyeCenterX = (leftEye.x + rightEye.x) / 2;
+    const eyeCenterY = (leftEye.y + rightEye.y) / 2;
     
-    try {
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const kycData = await generateKYCData();
-      setCurrentStep('complete');
-      setProgress(100);
-      
-      speak('Congratulations! Your identity verification is complete. You can now proceed to create your account.');
-      
-      setTimeout(() => {
-        onComplete(kycData);
-      }, 1500);
-      
-    } catch (err) {
-      const errorMsg = 'Failed to process verification. Please try again.';
-      setError(errorMsg);
-      speak(errorMsg);
-      setIsProcessing(false);
-    }
-  };
+    // Calculate yaw (left-right) based on nose position relative to eye center
+    const yawThreshold = 15; // pixels
+    let yaw = 'center';
+    if (nose.x < eyeCenterX - yawThreshold) yaw = 'left';
+    else if (nose.x > eyeCenterX + yawThreshold) yaw = 'right';
+    
+    // Calculate pitch (up-down) based on nose position relative to eye-mouth midpoint
+    const eyeMouthMidY = (eyeCenterY + mouth.y) / 2;
+    const pitchThreshold = 10; // pixels
+    let pitch = 'center';
+    if (nose.y < eyeMouthMidY - pitchThreshold) pitch = 'up';
+    else if (nose.y > eyeMouthMidY + pitchThreshold) pitch = 'down';
+    
+    return { yaw, pitch };
+  }, []);
 
-  // Clean up camera stream
-  const stopCameraStream = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    stopSpeech();
-  }, [stopSpeech]);
-
-  useEffect(() => {
-    return () => {
-      stopCameraStream();
-      // Clean up all timers on unmount
-      if (countdownTimerRef.current) {
-        clearInterval(countdownTimerRef.current);
-      }
-      if (detectionTimerRef.current) {
-        clearInterval(detectionTimerRef.current);
-      }
-    };
-  }, [stopCameraStream]);
-
-  // Stop camera when KYC is complete
-  useEffect(() => {
-    if (currentStep === 'complete') {
-      stopCameraStream();
-    }
-  }, [currentStep, stopCameraStream]);
-
-  // Real face detection function using Face-API
-  const detectRealFace = useCallback(async () => {
+  // Fast face detection with proper liveness detection
+  const detectFace = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current || !faceApiLoaded) {
-      return { faceDetected: false, confidence: 0, movement: false };
+      return { detected: false, quality: 0, position: null, blink: false, headPose: null };
     }
     
     try {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
-      if (!ctx) return { faceDetected: false, confidence: 0, movement: false };
+      if (!ctx) return { detected: false, quality: 0, position: null, blink: false, headPose: null };
       
-      // Set canvas size to match video
       canvas.width = video.videoWidth || 640;
       canvas.height = video.videoHeight || 480;
-      
-      // Draw current frame
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       
-      // Detect faces using Face-API with more lenient settings
       const detections = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions({
         inputSize: 416,
-        scoreThreshold: 0.3 // Lower threshold for better detection
+        scoreThreshold: 0.2
       })).withFaceLandmarks();
       
       if (detections.length === 0) {
-        setFaceDetected(false);
-        setFaceConfidence(0);
-        return { faceDetected: false, confidence: 0, movement: false };
+        return { detected: false, quality: 0, position: null, blink: false, headPose: null };
       }
       
-      // Get the best detection (highest confidence)
-      const bestDetection = detections.reduce((best, current) => 
-        current.detection.score > best.detection.score ? current : best
-      );
+      const detection = detections[0];
+      const box = detection.detection.box;
+      const confidence = detection.detection.score;
+      const landmarks = detection.landmarks;
       
-      const confidence = bestDetection.detection.score;
-      const box = bestDetection.detection.box;
-      
-      // Check if face is well-positioned (centered and appropriate size)
+      // Check face position and size
       const centerX = box.x + box.width / 2;
       const centerY = box.y + box.height / 2;
       const videoCenterX = canvas.width / 2;
@@ -419,409 +198,477 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
         Math.pow(centerX - videoCenterX, 2) + Math.pow(centerY - videoCenterY, 2)
       );
       
-      const maxAllowedDistance = Math.min(canvas.width, canvas.height) * 0.35; // 35% of frame (more lenient)
-      const isWellPositioned = distanceFromCenter < maxAllowedDistance;
+      const maxDistance = Math.min(canvas.width, canvas.height) * 0.25;
+      const isWellPositioned = distanceFromCenter < maxDistance;
+      const isGoodSize = box.width > canvas.width * 0.15 && box.height > canvas.height * 0.2;
       
-      // Check face size (should be at least 10% of frame width)
-      const minFaceSize = canvas.width * 0.10;
-      const isSizeGood = box.width > minFaceSize && box.height > minFaceSize;
+      const quality = confidence * (isWellPositioned ? 1 : 0.5) * (isGoodSize ? 1 : 0.5);
+      const detected = confidence > 0.3 && isWellPositioned && isGoodSize;
       
-      // Motion detection for movement steps
-      let hasMovement = false;
-      if (frameRef.current) {
-        const currentFrame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        let diffPixels = 0;
-        const threshold = 25;
-        const totalPixels = currentFrame.data.length / 4;
+      let position = 'center';
+      let blink = false;
+      let headPose = null;
+      
+      if (landmarks && detected) {
+        // Calculate head pose for better movement detection
+        headPose = calculateHeadPose(landmarks);
         
-        for (let i = 0; i < currentFrame.data.length; i += 4) {
-          const currentR = currentFrame.data[i];
-          const currentG = currentFrame.data[i + 1];
-          const currentB = currentFrame.data[i + 2];
-          
-          const prevR = frameRef.current.data[i];
-          const prevG = frameRef.current.data[i + 1];
-          const prevB = frameRef.current.data[i + 2];
-          
-          const diff = Math.abs(currentR - prevR) + Math.abs(currentG - prevG) + Math.abs(currentB - prevB);
-          
-          if (diff > threshold) {
-            diffPixels++;
-          }
-        }
+        // Determine position based on head pose
+        if (headPose.yaw === 'left') position = 'left';
+        else if (headPose.yaw === 'right') position = 'right';
+        else if (headPose.pitch === 'up') position = 'up';
+        else if (headPose.pitch === 'down') position = 'down';
         
-        const motionPercentage = (diffPixels / totalPixels) * 100;
-        hasMovement = motionPercentage > 0.2; // More sensitive movement detection
-        frameRef.current = currentFrame;
-      } else {
-        frameRef.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        // Calculate blink using Eye Aspect Ratio
+        const leftEye = landmarks.getLeftEye();
+        const rightEye = landmarks.getRightEye();
+        
+        const leftEAR = calculateEyeAspectRatio(leftEye);
+        const rightEAR = calculateEyeAspectRatio(rightEye);
+        const avgEAR = (leftEAR + rightEAR) / 2;
+        
+        // EAR threshold for blink detection (typically around 0.2-0.25)
+        blink = avgEAR < 0.23;
       }
       
-      const faceIsValid = confidence > 0.25 && isWellPositioned && isSizeGood;
-      setFaceDetected(faceIsValid);
-      setFaceConfidence(confidence);
-      
-      return {
-        faceDetected: faceIsValid,
-        confidence: confidence,
-        movement: hasMovement,
-        position: { centerX, centerY, width: box.width, height: box.height }
-      };
+      return { detected, quality, position, blink, headPose };
       
     } catch (error) {
       console.error('Face detection error:', error);
-      return { faceDetected: false, confidence: 0, movement: false };
+      return { detected: false, quality: 0, position: null, blink: false, headPose: null };
     }
-  }, [faceApiLoaded]);
-  
-  // Start face detection for current step
-  const startFaceDetection = useCallback(() => {
-    if (isDetecting) return;
-    
-    setIsDetecting(true);
-    setDetectionProgress(0);
-    
-    let progress = 0;
-    let validFrameCount = 0;
-    const targetTime = 500; // Realistic 500ms per step
-    const interval = 100; // More reasonable 100ms detection interval
-    const incrementPerTick = (interval / targetTime) * 100; // 20% per tick when valid
-    const requiredValidFrames = 2; // Need 2 consecutive valid detections
-    
-    // Don't speak instruction here - already spoken in completeStep
-    
-    detectionTimerRef.current = setInterval(async () => {
-      const faceResult = await detectRealFace();
-      let isValidAction = false;
+  }, [faceApiLoaded, calculateHeadPose, calculateEyeAspectRatio]);
+
+  // Complete current step
+  const completeCurrentStep = useCallback(() => {
+    const newCompleted = new Set(completedSteps);
+    newCompleted.add(currentStep);
+    setCompletedSteps(newCompleted);
+    setStepProgress(0);
+    setConsecutiveValidFrames(0);
+    setHasPlayedMovementSound(false);
+
+    const nextStepIndex = currentStepIndex + 1;
+    if (nextStepIndex < KYC_STEPS.length) {
+      const nextStep = KYC_STEPS[nextStepIndex];
+      setCurrentStep(nextStep.id);
+      
+      setTimeout(() => {
+        if (nextStep.id === 'processing') {
+          processKYC();
+        } else {
+          speak(nextStep.instruction);
+        }
+      }, 500);
+    }
+  }, [currentStep, currentStepIndex, completedSteps, speak]);
+
+  // Real-time face detection loop with proper liveness detection
+  useEffect(() => {
+    if (currentStep === 'camera-permission' || currentStep === 'processing' || currentStep === 'complete') {
+      return;
+    }
+
+    const runDetection = async () => {
+      const result = await detectFace();
+      setFaceDetected(result.detected);
+      setFaceQuality(result.quality);
       
       // Require face detection for all steps
-      if (!faceResult.faceDetected) {
-        validFrameCount = 0;
-        return; // Don't progress without face
+      if (!result.detected) {
+        setConsecutiveValidFrames(0);
+        setHasPlayedMovementSound(false);
+        detectionRef.current = requestAnimationFrame(runDetection);
+        return;
       }
       
-      // Step-specific validation
-      if (currentStep === 'turn-left') {
-        // Simple movement validation for left turn
-        isValidAction = faceResult.movement && faceResult.position && faceResult.position.centerX < (canvasRef.current?.width || 640) * 0.4;
+      // Handle step progression with proper liveness detection
+      let isValidAction = false;
+      
+      if (currentStep === 'position-face') {
+        // Just need good face detection for positioning
+        isValidAction = result.detected;
+      } else if (currentStep === 'turn-left') {
+        isValidAction = result.position === 'left' && result.headPose?.yaw === 'left';
       } else if (currentStep === 'turn-right') {
-        // Simple movement validation for right turn
-        isValidAction = faceResult.movement && faceResult.position && faceResult.position.centerX > (canvasRef.current?.width || 640) * 0.6;
-      } else if (currentStep === 'open-mouth') {
-        // For mouth opening, require significant movement (mouth landmarks would be better but this is simpler)
-        isValidAction = faceResult.movement && faceResult.confidence > 0.4;
+        isValidAction = result.position === 'right' && result.headPose?.yaw === 'right';
+      } else if (currentStep === 'turn-up') {
+        isValidAction = result.position === 'up' && result.headPose?.pitch === 'up';
+      } else if (currentStep === 'turn-down') {
+        isValidAction = result.position === 'down' && result.headPose?.pitch === 'down';
       } else if (currentStep === 'blink') {
-        // For blinking, require brief movement then stillness
-        isValidAction = faceResult.movement || validFrameCount > 0; // More lenient for blink
+        isValidAction = result.blink === true;
       }
       
       if (isValidAction) {
-        validFrameCount++;
-        if (validFrameCount >= requiredValidFrames) {
-          progress += incrementPerTick;
+        setConsecutiveValidFrames(prev => {
+          const newCount = prev + 1;
+          
+          // Play movement sound on first valid detection
+          if (newCount === 1 && !hasPlayedMovementSound) {
+            playMovementSound();
+            setHasPlayedMovementSound(true);
+          }
+          
+          return newCount;
+        });
+        
+        // Require 3 consecutive valid frames for robustness
+        if (consecutiveValidFrames >= 2) {
+          setStepProgress(prev => {
+            const newProgress = Math.min(prev + 8, 100);
+            
+            // Complete step when progress reaches 100%
+            if (newProgress >= 100) {
+              playSuccessSound();
+              speak('Perfect!');
+              setTimeout(() => completeCurrentStep(), 100);
+            }
+            
+            return newProgress;
+          });
         }
       } else {
-        validFrameCount = Math.max(0, validFrameCount - 1); // Gradual decay
+        // Strict reset to 0 for consecutive frame validation
+        setConsecutiveValidFrames(0);
+        setStepProgress(prev => Math.max(prev - 1, 0));
+        setHasPlayedMovementSound(false);
       }
       
-      progress = Math.min(progress, 100);
-      setDetectionProgress(progress);
-      
-      if (progress >= 100) {
-        if (detectionTimerRef.current) {
-          clearInterval(detectionTimerRef.current);
-          detectionTimerRef.current = null;
-        }
-        setIsDetecting(false);
-        setDetectionProgress(0);
-        
-        // Play success sound
-        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSaB0fPZdikAFmq88vLCciUFLYLQ88V6JwgYacHw3ot4CAsZY7Ht5qNMEQtPpOPxx2AeBSuC0vNcciQFLA==');
-        audio.volume = 0.5;
-        audio.play().catch(() => {});
-        
-        speak('Perfect!');
-        setTimeout(() => {
-          completeStep();
-        }, 200);
-      }
-    }, interval);
-  }, [currentStep, isDetecting, detectRealFace, completeStep, speak]);
-  
-  // Auto-start detection when step changes
-  useEffect(() => {
-    if (['turn-left', 'turn-right', 'open-mouth', 'blink'].includes(currentStep)) {
-      const timer = setTimeout(() => {
-        startFaceDetection();
-      }, 100); // Start immediately - super fast!
-      return () => clearTimeout(timer);
-    }
-  }, [currentStep, startFaceDetection]);
+      detectionRef.current = requestAnimationFrame(runDetection);
+    };
 
-  // Remove this useEffect as processing is now handled in completeStep
-  // useEffect(() => {
-  //   if (currentStep === 'blink' && completedSteps.has('blink')) {
-  //     setTimeout(processKYC, 1000);
-  //   }
-  // }, [currentStep, completedSteps]);
+    // Reset state when step changes
+    setConsecutiveValidFrames(0);
+    setStepProgress(0);
+    setHasPlayedMovementSound(false);
+    
+    detectionRef.current = requestAnimationFrame(runDetection);
+    
+    return () => {
+      if (detectionRef.current) {
+        cancelAnimationFrame(detectionRef.current);
+      }
+    };
+  }, [currentStep, consecutiveValidFrames, stepProgress, hasPlayedMovementSound, detectFace, playSuccessSound, playMovementSound, speak, completeCurrentStep]);
+
+  // Initialize camera
+  const initializeCamera = async () => {
+    try {
+      setError(null);
+      speak('Starting camera. Please allow permissions.');
+      
+      const constraints = {
+        video: {
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          facingMode: 'user'
+        },
+        audio: false
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            videoRef.current.play().then(() => {
+              setCurrentStep('position-face');
+              speak('Position Your Face In The Frame!');
+            }).catch(err => {
+              console.error('Video play error:', err);
+              setError('Failed to start video. Please refresh.');
+            });
+          }
+        };
+      }
+      
+    } catch (err: any) {
+      console.error('Camera error:', err);
+      let errorMessage = 'Camera access failed. Please allow camera permissions and try again.';
+      if (err.name === 'NotAllowedError') {
+        errorMessage = 'Camera permission denied. Please allow camera access.';
+      }
+      setError(errorMessage);
+      speak(errorMessage);
+    }
+  };
+
+
+  // Process KYC completion
+  const processKYC = async () => {
+    setIsProcessing(true);
+    speak('Processing verification...');
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const kycData = await generateKYCData();
+      setCurrentStep('complete');
+      
+      // Play final success sound and show verified popup
+      playSuccessSound();
+      speak('Verification Complete! You have been successfully verified.');
+      setShowVerified(true);
+      
+      setTimeout(() => {
+        onComplete(kycData);
+      }, 4000);
+      
+    } catch (err) {
+      setError('Processing failed. Please try again.');
+      setIsProcessing(false);
+    }
+  };
+
+  // Generate KYC data
+  const generateKYCData = useCallback(async (): Promise<{ deviceFingerprint: string; verificationHash: string }> => {
+    const deviceInfo = {
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      platform: navigator.platform,
+      screenResolution: `${screen.width}x${screen.height}`,
+      timestamp: Date.now()
+    };
+
+    const fingerprintData = JSON.stringify(deviceInfo);
+    const fingerprintBuffer = new TextEncoder().encode(fingerprintData);
+    const fingerprintHashBuffer = await crypto.subtle.digest('SHA-256', fingerprintBuffer);
+    const fingerprintHash = Array.from(new Uint8Array(fingerprintHashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    const verificationData = {
+      kycCompleted: true,
+      stepsCompleted: Array.from(completedSteps),
+      deviceFingerprint: fingerprintHash,
+      verificationTime: new Date().toISOString()
+    };
+
+    const verificationDataString = JSON.stringify(verificationData);
+    const verificationBuffer = new TextEncoder().encode(verificationDataString);
+    const verificationHashBuffer = await crypto.subtle.digest('SHA-256', verificationBuffer);
+    const verificationHash = Array.from(new Uint8Array(verificationHashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    return { deviceFingerprint: fingerprintHash, verificationHash };
+  }, [completedSteps]);
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (detectionRef.current) {
+        cancelAnimationFrame(detectionRef.current);
+      }
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+    <div className="min-h-screen bg-black flex items-center justify-center p-4" data-testid="face-kyc-container">
       <Card className="w-full max-w-2xl border-[#f7931a]/20 bg-gray-950">
         <CardHeader className="text-center pb-2">
           <CardTitle className="text-xl text-white flex items-center justify-center gap-2">
             <Shield className="w-5 h-5 text-[#f7931a]" />
             Face Verification
           </CardTitle>
-          <Progress 
-            value={progress} 
-            className="w-full h-1 bg-gray-800 mt-2" 
-            data-testid="kyc-progress"
-          />
         </CardHeader>
 
         <CardContent className="space-y-4">
-
           {/* Error Alert */}
           {error && (
-            <Alert className="border-red-500/50 bg-red-500/10">
+            <Alert className="border-red-500/50 bg-red-500/10" data-testid="error-alert">
               <AlertTriangle className="h-4 w-4 text-red-400" />
-              <AlertDescription className="text-red-400">
-                {error}
-              </AlertDescription>
+              <AlertDescription className="text-red-400">{error}</AlertDescription>
             </Alert>
           )}
 
           {/* Camera Setup */}
           {currentStep === 'camera-permission' && (
-            <div className="text-center space-y-4">
+            <div className="text-center space-y-4" data-testid="camera-permission-step">
               <div className="w-20 h-20 mx-auto bg-[#f7931a]/20 rounded-full flex items-center justify-center">
                 <Camera className="w-10 h-10 text-[#f7931a]" />
               </div>
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold text-white">Camera Access Required</h3>
                 <p className="text-gray-400 text-sm max-w-md mx-auto">
-                  We need your camera to verify your identity. No photos are stored - everything happens live.
+                  We need camera access for face verification. No photos are stored.
                 </p>
               </div>
-              <div className="space-y-4">
-                <Button 
-                  onClick={initializeCamera}
-                  size="lg"
-                  className="bg-[#f7931a] hover:bg-[#ff9416] text-black font-bold px-8 py-4 text-lg"
-                  data-testid="button-enable-camera"
-                >
-                  <Camera className="w-6 h-6 mr-3" />
-                  Start Face Verification
-                </Button>
-                
-                {speechSupported && (
-                  <p className="text-sm text-[#f7931a] flex items-center justify-center gap-2">
-                    <Volume2 className="w-4 h-4" />
-                    Voice guidance enabled
-                  </p>
-                )}
-              </div>
+              <Button 
+                onClick={initializeCamera}
+                className="bg-[#f7931a] hover:bg-[#f7931a]/80 text-black font-semibold"
+                data-testid="button-start-camera"
+              >
+                Start Camera
+              </Button>
             </div>
           )}
 
-          {/* Camera View */}
+          {/* Face Detection Interface */}
           {currentStep !== 'camera-permission' && currentStep !== 'complete' && (
-            <div className="space-y-6">
-              {/* Simple Instruction */}
+            <div className="space-y-4" data-testid="face-detection-interface">
+              {/* Instruction */}
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-white mb-2">
-                  {currentStepData?.instruction}
-                </h2>
-                {countdown !== null && (
-                  <div className="text-4xl font-bold text-[#f7931a] mb-2">
-                    {countdown > 0 ? countdown : "✓"}
-                  </div>
-                )}
-                {speechSupported && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => speak(currentStepData?.instruction || '')}
-                    disabled={isSpeaking}
-                    className="text-[#f7931a] hover:bg-[#f7931a]/20"
-                    data-testid="button-repeat-instruction"
-                  >
-                    {isSpeaking ? (
-                      <VolumeX className="w-4 h-4 mr-2" />
-                    ) : (
-                      <Volume2 className="w-4 h-4 mr-2" />
-                    )}
-                    {isSpeaking ? 'Speaking...' : 'Repeat'}
-                  </Button>
-                )}
+                <h3 className="text-lg font-semibold text-white mb-2" data-testid="text-instruction">
+                  {currentStepData.instruction}
+                </h3>
+                
+                {/* Quality Measure Line */}
+                <div className="w-full max-w-xs mx-auto bg-gray-700 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 transition-all duration-200"
+                    style={{ width: `${Math.max(faceQuality * 100, 10)}%` }}
+                    data-testid="quality-measure"
+                  />
+                </div>
+                <p className="text-xs text-gray-400 mt-1">Quality: {Math.round(faceQuality * 100)}%</p>
               </div>
 
-              {/* Large Camera Circle */}
-              <div className="flex justify-center">
-                <div className="relative w-96 h-96 rounded-full overflow-hidden border-4 border-[#f7931a] bg-black">
+              {/* Video Container with Circular Progress */}
+              <div className="relative mx-auto w-80 h-80">
+                {/* Circular Progress Ring */}
+                <svg 
+                  className="absolute inset-0 w-full h-full -rotate-90 z-10" 
+                  viewBox="0 0 100 100"
+                  data-testid="circular-progress"
+                >
+                  {/* Background Circle */}
+                  <circle
+                    cx="50" cy="50" r="45"
+                    fill="none"
+                    stroke="rgba(156, 163, 175, 0.3)"
+                    strokeWidth="2"
+                  />
+                  {/* Completed Progress */}
+                  <circle
+                    cx="50" cy="50" r="45"
+                    fill="none"
+                    stroke="#f7931a"
+                    strokeWidth="3"
+                    strokeDasharray={`${completedAngle * 0.785} 283`}
+                    className="transition-all duration-1000 ease-out"
+                  />
+                  {/* Current Step Progress */}
+                  <circle
+                    cx="50" cy="50" r="45"
+                    fill="none"
+                    stroke="#22c55e"
+                    strokeWidth="3"
+                    strokeDasharray={`${(stepProgress / 100) * segmentAngle * 0.785} 283`}
+                    strokeDashoffset={`${-completedAngle * 0.785}`}
+                    className="transition-all duration-200"
+                  />
+                </svg>
+
+                {/* Video Element */}
+                <div className="absolute inset-4 rounded-full overflow-hidden bg-gray-800">
                   <video
                     ref={videoRef}
-                    className="w-full h-full object-cover scale-110"
                     autoPlay
                     playsInline
                     muted
-                    data-testid="kyc-video"
-                    style={{
-                      transform: 'scaleX(-1) scale(1.1)', // Mirror and zoom slightly
-                      filter: 'contrast(1.1) brightness(1.05)'
-                    }}
+                    className="w-full h-full object-cover scale-x-[-1]"
+                    data-testid="video-feed"
                   />
                   
-                  {/* Centered Guide Circle */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-80 h-80 border-2 border-[#f7931a] rounded-full opacity-50"></div>
-                  </div>
-
-                  {/* Status Badge */}
-                  <div className="absolute top-4 right-4">
-                    <Badge 
-                      className={`${
-                        completedSteps.has(currentStep) 
-                          ? "bg-green-600 text-white" 
-                          : "bg-[#f7931a] text-black"
-                      }`}
-                    >
-                      {completedSteps.has(currentStep) ? (
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                      ) : (
-                        <Circle className="w-4 h-4 mr-1" />
-                      )}
-                      {completedSteps.has(currentStep) ? "✓" : "◯"}
-                    </Badge>
-                  </div>
+                  {/* Face Detection Indicator */}
+                  {faceDetected && (
+                    <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full animate-pulse" data-testid="face-detected-indicator" />
+                  )}
+                  
+                  {/* Direction Indicator */}
+                  {currentStep.includes('turn') && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      {currentStep === 'turn-left' && <ArrowLeft className="w-8 h-8 text-white/70" />}
+                      {currentStep === 'turn-right' && <ArrowRight className="w-8 h-8 text-white/70" />}
+                      {currentStep === 'turn-up' && <ArrowUp className="w-8 h-8 text-white/70" />}
+                      {currentStep === 'turn-down' && <ArrowDown className="w-8 h-8 text-white/70" />}
+                    </div>
+                  )}
+                  
+                  {currentStep === 'blink' && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <Eye className="w-8 h-8 text-white/70" />
+                    </div>
+                  )}
                 </div>
+
+                <canvas ref={canvasRef} className="hidden" />
               </div>
 
-              {/* Auto-detection Progress */}
-              {isDetecting && (
-                <div className="text-center space-y-4">
-                  <div className="relative w-32 h-32 mx-auto">
-                    {/* Background circle */}
-                    <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
-                      <path
-                        className="text-gray-700"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        fill="transparent"
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      />
-                      {/* Progress circle */}
-                      <path
-                        className="text-[#f7931a]"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        fill="transparent"
-                        strokeDasharray={`${detectionProgress}, 100`}
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      />
-                    </svg>
-                    {/* Progress text */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-2xl font-bold text-[#f7931a]">
-                        {Math.round(detectionProgress)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-400">
-                      Follow the instruction - movement detected automatically
-                    </p>
-                    {faceApiLoaded && (
-                      <div className="flex items-center justify-center gap-4 text-xs">
-                        <div className={`flex items-center gap-1 ${
-                          faceDetected ? 'text-green-400' : 'text-red-400'
-                        }`}>
-                          <div className={`w-2 h-2 rounded-full ${
-                            faceDetected ? 'bg-green-400' : 'bg-red-400'
-                          }`} />
-                          Face: {faceDetected ? 'Detected' : 'Not Found'}
-                        </div>
-                        <div className="text-gray-500">
-                          Confidence: {Math.round(faceConfidence * 100)}%
-                        </div>
-                      </div>
-                    )}
-                    {!faceApiLoaded && (
-                      <p className="text-xs text-yellow-400">
-                        Loading face detection models...
-                      </p>
-                    )}
-                  </div>
+              {/* Processing State */}
+              {currentStep === 'processing' && (
+                <div className="text-center" data-testid="processing-state">
+                  <div className="w-8 h-8 border-2 border-[#f7931a] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                  <p className="text-white">Processing verification...</p>
                 </div>
               )}
             </div>
           )}
 
-          {/* Processing State */}
-          {currentStep === 'processing' && (
-            <div className="text-center space-y-4">
-              <div className="w-20 h-20 mx-auto bg-[#f7931a]/20 rounded-full flex items-center justify-center animate-pulse">
-                <RotateCcw className="w-10 h-10 text-[#f7931a] animate-spin" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-white">Processing Verification</h3>
-                <p className="text-gray-400 text-sm">
-                  Generating secure device fingerprint and verification hash...
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Success State */}
-          {currentStep === 'complete' && (
-            <div className="text-center space-y-4">
-              <div className="w-20 h-20 mx-auto bg-green-600 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-10 h-10 text-white" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-green-400">Verification Complete!</h3>
-                <p className="text-gray-400 text-sm">
-                  Your identity has been verified. Proceeding to account setup...
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Hidden canvas for face detection */}
-          <canvas ref={canvasRef} className="hidden" width="640" height="480" />
-
-          {/* Navigation */}
-          <div className="flex justify-between pt-4 border-t border-gray-800">
+          {/* Back Button */}
+          <div className="flex justify-center">
             <Button
+              variant="outline"
               onClick={onBack}
-              disabled={isProcessing || currentStep === 'complete'}
-              className="bg-gray-700 hover:bg-gray-600 text-white"
-              data-testid="button-kyc-back"
+              className="border-gray-600 text-gray-300 hover:bg-gray-800"
+              data-testid="button-back"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            
-            {currentStep === 'complete' && (
-              <Button
-                onClick={() => {
-                  // Fallback in case auto-advance doesn't work
-                  if (completedSteps.size > 0) {
-                    onComplete({ deviceFingerprint: '', verificationHash: '' });
-                  }
-                }}
-                className="bg-[#f7931a] hover:bg-[#ff9416] text-black font-bold"
-                data-testid="button-kyc-continue"
-              >
-                <ArrowRight className="w-4 h-4 mr-2" />
-                Continue to Account Setup
-              </Button>
-            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Verification Complete Dialog */}
+      <Dialog open={showVerified} onOpenChange={setShowVerified}>
+        <DialogContent className="bg-gray-900 border-[#f7931a]/20 text-white" data-testid="verified-popup">
+          <DialogHeader className="text-center">
+            <div className="relative w-16 h-16 mx-auto mb-4">
+              {/* Animated Circle */}
+              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+                <circle
+                  cx="50" cy="50" r="40"
+                  fill="none"
+                  stroke="#22c55e"
+                  strokeWidth="4"
+                  strokeDasharray="251"
+                  strokeDashoffset="251"
+                  className="animate-[drawCircle_2s_ease-out_forwards]"
+                />
+              </svg>
+              {/* Check Icon */}
+              <div className="absolute inset-0 bg-green-500 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-8 h-8 text-white animate-[fadeIn_1.5s_ease-out_forwards] opacity-0" />
+              </div>
+            </div>
+            <DialogTitle className="text-2xl text-green-400">Verified!</DialogTitle>
+            <DialogDescription className="text-gray-300">
+              Your face verification has been completed successfully. You can now proceed with account creation.
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Animations */}
+      <style>{`
+        @keyframes drawCircle {
+          to {
+            stroke-dashoffset: 0;
+          }
+        }
+        @keyframes fadeIn {
+          to {
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }
