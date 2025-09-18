@@ -352,21 +352,33 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
     };
   }, [currentStep, consecutiveValidFrames, stepProgress, hasPlayedMovementSound, detectFace, playSuccessSound, playMovementSound, speak, completeCurrentStep]);
 
-  // Initialize camera
+  // Initialize camera with better error handling for Replit environment
   const initializeCamera = async () => {
     try {
       setError(null);
       speak('Starting camera. Please allow permissions.');
       
+      // Check if getUserMedia is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera API not supported in this browser');
+      }
+
+      // Check if we're in a secure context
+      if (!window.isSecureContext) {
+        console.warn('Not in secure context, camera may not work');
+      }
+      
       const constraints = {
         video: {
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          facingMode: 'user'
+          width: { ideal: 640, min: 480 },
+          height: { ideal: 480, min: 360 },
+          facingMode: 'user',
+          frameRate: { ideal: 15, max: 30 }
         },
         audio: false
       };
 
+      console.log('Requesting camera access...');
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
       
@@ -375,22 +387,33 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
             videoRef.current.play().then(() => {
+              console.log('Camera started successfully');
               setCurrentStep('position-face');
               speak('Position Your Face In The Frame!');
             }).catch(err => {
               console.error('Video play error:', err);
-              setError('Failed to start video. Please refresh.');
+              setError('Failed to start video. Please refresh and try again.');
             });
           }
         };
       }
       
     } catch (err: any) {
-      console.error('Camera error:', err);
+      console.error('Camera error details:', err);
       let errorMessage = 'Camera access failed. Please allow camera permissions and try again.';
+      
       if (err.name === 'NotAllowedError') {
-        errorMessage = 'Camera permission denied. Please allow camera access.';
+        errorMessage = 'Camera permission denied. Please click "Allow" when prompted for camera access.';
+      } else if (err.name === 'NotFoundError') {
+        errorMessage = 'No camera found. Please ensure you have a camera connected.';
+      } else if (err.name === 'NotSupportedError') {
+        errorMessage = 'Camera not supported by this browser.';
+      } else if (err.name === 'NotReadableError') {
+        errorMessage = 'Camera is already in use by another application.';
+      } else if (err.message.includes('secure context')) {
+        errorMessage = 'Camera requires secure connection. Please try refreshing the page.';
       }
+      
       setError(errorMessage);
       speak(errorMessage);
     }
@@ -612,17 +635,19 @@ export default function FaceKYC({ onComplete, onBack }: FaceKYCProps) {
             </div>
           )}
 
-          {/* Back Button */}
-          <div className="flex justify-center">
-            <Button
-              variant="outline"
-              onClick={onBack}
-              className="border-gray-600 text-gray-300 hover:bg-gray-800"
-              data-testid="button-back"
-            >
-              Back
-            </Button>
-          </div>
+          {/* Back Button - Hidden as requested by user */}
+          {false && (
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                onClick={onBack}
+                className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                data-testid="button-back"
+              >
+                Back
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
