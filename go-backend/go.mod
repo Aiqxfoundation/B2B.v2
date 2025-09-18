@@ -1,6 +1,8 @@
 module bit2block-mining
 
-go 1.19
+go 1.24.0
+
+toolchain go1.24.7
 
 require (
 	github.com/go-chi/chi/v5 v5.0.0

@@ -48,9 +48,9 @@ func main() {
 
         r := chi.NewRouter()
 
-        // CORS configuration for frontend compatibility
+        // CORS configuration for frontend compatibility (Replit proxy support)
         r.Use(cors.Handler(cors.Options{
-                AllowedOrigins:   []string{"http://localhost:5000"}, // Frontend port
+                AllowedOrigins:   []string{"*"}, // Allow all origins for Replit proxy
                 AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
                 AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
                 ExposedHeaders:   []string{"Link"},
