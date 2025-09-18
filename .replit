@@ -41,6 +41,14 @@ args = "Start application"
 task = "workflow.run"
 args = "Go Backend Test"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Go Backend"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Go Mining Backend"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -64,6 +72,30 @@ waitForPort = 8080
 
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow]]
+name = "Go Backend"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd go-backend && PORT=8080 go run main.go"
+waitForPort = 8080
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "Go Mining Backend"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd go-backend && go run main.go"
+waitForPort = 8080
 
 [agent]
 integrations = ["javascript_database==1.0.0"]
