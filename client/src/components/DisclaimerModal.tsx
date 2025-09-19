@@ -43,7 +43,7 @@ export default function DisclaimerModal({ open, onAccept }: DisclaimerModalProps
             <Alert className="border-2 border-red-500 bg-red-900/30 p-2">
               <AlertTriangle className="h-3 w-3 text-red-400" />
               <AlertDescription className="text-red-300 text-xs">
-                <strong>⚠️ EXPERIMENTAL PLATFORM WARNING:</strong> GBTC Mining App is a completely experimental virtual token mining simulation. You may lose all deposited funds. GBTC tokens have no guaranteed value and may become worthless. Participate only with funds you can afford to lose entirely.
+                <strong>⚠️ EXPERIMENTAL PLATFORM WARNING:</strong> B2B Mining App is a completely experimental virtual token mining simulation. You may lose all deposited funds. B2B tokens have no guaranteed value and may become worthless. Participate only with funds you can afford to lose entirely.
               </AlertDescription>
             </Alert>
 
@@ -54,10 +54,10 @@ export default function DisclaimerModal({ open, onAccept }: DisclaimerModalProps
                 <h3 className="text-sm font-bold text-white">Project Identity & Independence Declaration</h3>
               </div>
               <div className="text-white text-xs pl-5 space-y-1">
-                <p><strong>GBTC Mining Platform</strong> is an experimental virtual token mining application developed by independent blockchain developers and innovators. <strong>CRITICAL CLARIFICATIONS:</strong></p>
+                <p><strong>B2B Mining Platform</strong> is an experimental virtual token mining application developed by independent blockchain developers and innovators. <strong>CRITICAL CLARIFICATIONS:</strong></p>
                 <ul className="ml-3 list-disc space-y-0.5 text-gray-300">
-                  <li><strong>GBTC is NOT Bitcoin</strong> - GBTC is a newly created experimental token, completely separate from Bitcoin</li>
-                  <li><strong>NOT affiliated with Grayscale Bitcoin Trust (GBTC)</strong> - No connection whatsoever to any existing GBTC securities</li>
+                  <li><strong>B2B is NOT Bitcoin</strong> - B2B is a newly created experimental token, completely separate from Bitcoin</li>
+                  <li><strong>NOT affiliated with Grayscale Bitcoin Trust</strong> - No connection whatsoever to any existing securities</li>
                   <li><strong>Independent Development Team</strong> - We are unregulated blockchain developers and innovators</li>
                   <li><strong>NO connection to Bitcoin Foundation</strong> - Not endorsed by or connected to any official Bitcoin entities</li>
                   <li><strong>Virtual Mining Only</strong> - No real electricity, hardware, or energy consumption involved</li>
@@ -110,15 +110,15 @@ export default function DisclaimerModal({ open, onAccept }: DisclaimerModalProps
                 <h3 className="text-sm font-bold text-white">Platform Mechanics & Business Model</h3>
               </div>
               <div className="text-white text-xs pl-5 space-y-1">
-                <p><strong>How GBTC Mining Works:</strong></p>
+                <p><strong>How B2B Mining Works:</strong></p>
                 <ul className="ml-3 list-disc space-y-0.5 text-gray-300">
                   <li><strong>Virtual Block-Based Mining</strong> - All mining is simulated within the app, no real energy or hardware</li>
                   <li><strong>USDT Deposits</strong> - Users deposit USDT to participate in the ecosystem</li>
-                  <li><strong>Hashrate Purchases</strong> - Buy virtual hashrate within the app to earn GBTC tokens</li>
+                  <li><strong>Hashrate Purchases</strong> - Buy virtual hashrate within the app to earn B2B tokens</li>
                   <li><strong>Bitcoin Time Lock & Earn</strong> - Deposit Bitcoin in time-locked positions for additional earnings</li>
                   <li><strong>In-App Revenue Model</strong> - Platform generates revenue from hashrate purchases and other in-app activities</li>
                 </ul>
-                <p><strong>Token Value Mechanism:</strong> GBTC token value after launch will be determined by revenue generated from in-app purchases, user engagement, platform usage, and overall community interest. <strong>NO GUARANTEED VALUE OR RETURNS.</strong></p>
+                <p><strong>Token Value Mechanism:</strong> B2B token value after launch will be determined by revenue generated from in-app purchases, user engagement, platform usage, and overall community interest. <strong>NO GUARANTEED VALUE OR RETURNS.</strong></p>
                 <p><strong>Staker Benefits:</strong> Time-lock BTC stakers receive income distributions from in-app purchase revenues according to our internal allocation model. <strong>Returns not guaranteed and depend on platform performance.</strong></p>
               </div>
             </div>
@@ -139,10 +139,10 @@ export default function DisclaimerModal({ open, onAccept }: DisclaimerModalProps
                 </Alert>
                 <p><strong>Critical Platform Risks:</strong></p>
                 <ul className="ml-3 list-disc space-y-0.5 text-gray-300">
-                  <li><strong>Total Loss Risk:</strong> All deposited USDT, Bitcoin, and earned GBTC tokens may become worthless</li>
+                  <li><strong>Total Loss Risk:</strong> All deposited USDT, Bitcoin, and earned B2B tokens may become worthless</li>
                   <li><strong>No Guaranteed Profits:</strong> We make no commitments to profits, returns, or token value appreciation</li>
                   <li><strong>Experimental Nature:</strong> Platform is in experimental phase with potential bugs, failures, or complete shutdown</li>
-                  <li><strong>Token Liquidity Risk:</strong> GBTC tokens may have no market or trading value after launch</li>
+                  <li><strong>Token Liquidity Risk:</strong> B2B tokens may have no market or trading value after launch</li>
                   <li><strong>Revenue Dependency:</strong> Token value depends entirely on in-app purchase revenues which may be insufficient</li>
                   <li><strong>Platform Shutdown Risk:</strong> Developers may discontinue platform at any time</li>
                   <li><strong>No Insurance or Guarantees:</strong> No FDIC, SIPC, or any insurance protection</li>
@@ -186,7 +186,7 @@ export default function DisclaimerModal({ open, onAccept }: DisclaimerModalProps
                   <li>You participate entirely at your own risk and decision</li>
                   <li>You will NOT hold developers liable for any financial losses, damages, or platform failures</li>
                   <li>You accept full responsibility for regulatory compliance in your jurisdiction</li>
-                  <li>You understand GBTC tokens may have zero value and provide no guaranteed returns</li>
+                  <li>You understand B2B tokens may have zero value and provide no guaranteed returns</li>
                   <li>You acknowledge developers make no profit commitments or guarantees</li>
                   <li>You will not pursue legal action against developers for losses or platform discontinuation</li>
                   <li>You understand we are not a regulated financial services provider</li>

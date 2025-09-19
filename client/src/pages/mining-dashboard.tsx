@@ -46,7 +46,7 @@ export default function MiningDashboard() {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [blockTimer, setBlockTimer] = useState(3600); // 1 hour in seconds
+  const [blockTimer, setBlockTimer] = useState(600); // 10 minutes in seconds
   const [lastClaimed, setLastClaimed] = useState<Date | null>(null);
   const [currentHash, setCurrentHash] = useState<string>('');  
   const [miningActive, setMiningActive] = useState(true);
@@ -126,11 +126,11 @@ export default function MiningDashboard() {
 
   // Memoized reward calculations for performance
   const rewardCalculations = useMemo(() => {
-    const currentBlockReward = 50; // GBTC per block
+    const currentBlockReward = 50; // B2B per block
     const myMiningShare = myHashrate > 0 ? Math.round((myHashrate / globalHashrate) * 100 * 1000000) / 1000000 : 0; // Percentage with 6 decimals precision
-    const myEstimatedReward = Math.round((myHashrate / globalHashrate) * currentBlockReward * 100000000) / 100000000; // GBTC per block with 8 decimals
-    const dailyEstimatedRewards = Math.round(myEstimatedReward * 24 * 10000) / 10000; // 24 blocks per day with 4 decimals
-    const unclaimedGBTC = parseFloat(user?.unclaimedBalance || '0');
+    const myEstimatedReward = Math.round((myHashrate / globalHashrate) * currentBlockReward * 100000000) / 100000000; // B2B per block with 8 decimals
+    const dailyEstimatedRewards = Math.round(myEstimatedReward * 144 * 10000) / 10000; // 144 blocks per day with 4 decimals
+    const unclaimedB2B = parseFloat(user?.unclaimedBalance || '0');
     const isNewUser = myHashrate === 0;
     
     return {
@@ -138,13 +138,13 @@ export default function MiningDashboard() {
       myMiningShare,
       myEstimatedReward,
       dailyEstimatedRewards,
-      unclaimedGBTC,
+      unclaimedB2B,
       isNewUser
     };
   }, [myHashrate, globalHashrate, user?.unclaimedBalance]);
   
   // Destructure for backward compatibility
-  const { currentBlockReward, myMiningShare, myEstimatedReward, dailyEstimatedRewards, unclaimedGBTC, isNewUser } = rewardCalculations;
+  const { currentBlockReward, myMiningShare, myEstimatedReward, dailyEstimatedRewards, unclaimedB2B, isNewUser } = rewardCalculations;
 
   // Memoized advanced analytics calculations
   const analyticsCalculations = useMemo(() => {
@@ -186,7 +186,7 @@ export default function MiningDashboard() {
             setIsBlockAnimating(true);
             setTimeout(() => setIsBlockAnimating(false), 100); // Faster animation
           }
-          return 3600; // Reset to 1 hour
+          return 600; // Reset to 10 minutes
         }
         return prev - 1;
       });
@@ -202,7 +202,7 @@ export default function MiningDashboard() {
   };
 
   useEffect(() => {
-    setBlockProgress(((3600 - blockTimer) / 3600) * 100);
+    setBlockProgress(((600 - blockTimer) / 600) * 100);
   }, [blockTimer]);
   
   // Memoized hashrate display function
@@ -413,7 +413,7 @@ export default function MiningDashboard() {
                     </div>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    Est. Reward: {myEstimatedReward.toFixed(8)} GBTC
+                    Est. Reward: {myEstimatedReward.toFixed(8)} B2B
                   </div>
                 </div>
               )}
@@ -467,7 +467,7 @@ export default function MiningDashboard() {
                   <div className="data-card p-3">
                     <div className="text-xs text-muted-foreground mb-1">Est. Value</div>
                     <div className="text-lg font-mono font-bold text-chart-2">
-                      {(coins.length * myEstimatedReward).toFixed(6)} GBTC
+                      {(coins.length * myEstimatedReward).toFixed(6)} B2B
                     </div>
                   </div>
                 </div>
@@ -589,7 +589,7 @@ export default function MiningDashboard() {
               </div>
               <div className="flex justify-between mt-2 text-xs text-muted-foreground">
                 <span>Block #871235</span>
-                <span>Estimated: {myEstimatedReward.toFixed(8)} GBTC</span>
+                <span>Estimated: {myEstimatedReward.toFixed(8)} B2B</span>
               </div>
             </div>
           )}
@@ -599,12 +599,12 @@ export default function MiningDashboard() {
             <div className="data-card p-3">
               <div className="text-xs text-muted-foreground mb-1">Per Block</div>
               <div className="text-lg font-mono font-bold text-chart-3">{myEstimatedReward.toFixed(6)}</div>
-              <div className="text-xs text-muted-foreground">GBTC</div>
+              <div className="text-xs text-muted-foreground">B2B</div>
             </div>
             <div className="data-card p-3">
               <div className="text-xs text-muted-foreground mb-1">Daily Est.</div>
               <div className="text-lg font-mono font-bold text-chart-4">{dailyEstimatedRewards.toFixed(4)}</div>
-              <div className="text-xs text-muted-foreground">GBTC</div>
+              <div className="text-xs text-muted-foreground">B2B</div>
             </div>
             <div className="data-card p-3">
               <div className="text-xs text-muted-foreground mb-1">Power Cost</div>
@@ -773,7 +773,7 @@ export default function MiningDashboard() {
             <div className="mt-3 p-2 bg-primary/5 rounded-lg border border-primary/20">
               <div className="text-xs text-muted-foreground text-center">
                 <span className="font-semibold">Max Supply:</span>
-                <span className="font-mono ml-2 text-primary">2,100,000 GBTC</span>
+                <span className="font-mono ml-2 text-primary">21,000,000 B2B</span>
               </div>
             </div>
           </Card>
@@ -790,10 +790,10 @@ export default function MiningDashboard() {
               <div>
                 <div className="text-xs text-muted-foreground uppercase mb-1">Unclaimed Rewards</div>
                 <div className="text-3xl font-mono font-bold text-gradient-green">
-                  {unclaimedGBTC.toFixed(8)} GBTC
+                  {unclaimedB2B.toFixed(8)} B2B
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  Daily Est.: {dailyEstimatedRewards.toFixed(4)} GBTC
+                  Daily Est.: {dailyEstimatedRewards.toFixed(4)} B2B
                 </div>
               </div>
               <div className="text-right">
@@ -805,7 +805,7 @@ export default function MiningDashboard() {
             <Button 
               className="w-full btn-primary"
               onClick={handleClaim}
-              disabled={unclaimedGBTC === 0 || claimRewardsMutation.isPending}
+              disabled={unclaimedB2B === 0 || claimRewardsMutation.isPending}
               data-testid="button-claim-rewards"
             >
               {claimRewardsMutation.isPending ? (
@@ -816,12 +816,12 @@ export default function MiningDashboard() {
               ) : (
                 <>
                   <i className="fas fa-coins mr-2"></i>
-                  CLAIM {unclaimedGBTC.toFixed(4)} GBTC
+                  CLAIM {unclaimedB2B.toFixed(4)} B2B
                 </>
               )}
             </Button>
 
-            {unclaimedGBTC > 0 && showClaimWarning && (
+            {unclaimedB2B > 0 && showClaimWarning && (
               <div className="mt-3 p-2 rounded-lg bg-warning/10 border border-warning/30">
                 <div className="text-xs text-warning">
                   <i className="fas fa-exclamation-triangle mr-1"></i>
@@ -860,7 +860,7 @@ export default function MiningDashboard() {
               </Button>
               
               <div className="text-xs text-muted-foreground text-center">
-                Upgrade your mining power to earn more GBTC rewards
+                Upgrade your mining power to earn more B2B rewards
               </div>
             </div>
           </Card>
@@ -902,7 +902,7 @@ export default function MiningDashboard() {
               <div className="space-y-3">
                 <div className="data-card">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-muted-foreground uppercase">GBTC Balance</span>
+                    <span className="text-xs text-muted-foreground uppercase">B2B Balance</span>
                     <i className="fas fa-coins text-primary"></i>
                   </div>
                   <div className="text-2xl font-mono font-bold text-gradient">
@@ -928,9 +928,9 @@ export default function MiningDashboard() {
                     <i className="fas fa-gift text-chart-3"></i>
                   </div>
                   <div className="text-2xl font-mono font-bold text-chart-3">
-                    {unclaimedGBTC.toFixed(4)}
+                    {unclaimedB2B.toFixed(4)}
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">Pending GBTC</div>
+                  <div className="text-xs text-muted-foreground mt-1">Pending B2B</div>
                 </div>
               </div>
               
@@ -978,7 +978,7 @@ export default function MiningDashboard() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-mono font-bold text-accent">+{item.reward} GBTC</div>
+                  <div className="text-sm font-mono font-bold text-accent">+{item.reward} B2B</div>
                   <div className="text-xs text-green-500">
                     <i className="fas fa-check-circle mr-1"></i>
                     {item.status}
@@ -993,12 +993,12 @@ export default function MiningDashboard() {
         <div className="grid grid-cols-2 gap-3">
           <Card className="data-card">
             <div className="text-xs text-muted-foreground mb-1">24h Earnings</div>
-            <div className="text-xl font-mono font-bold text-gradient-green">0.5432 GBTC</div>
+            <div className="text-xl font-mono font-bold text-gradient-green">0.5432 B2B</div>
             <div className="text-xs text-accent">+12.5%</div>
           </Card>
           <Card className="data-card">
             <div className="text-xs text-muted-foreground mb-1">Total Mined</div>
-            <div className="text-xl font-mono font-bold text-gradient">127.384 GBTC</div>
+            <div className="text-xl font-mono font-bold text-gradient">127.384 B2B</div>
             <div className="text-xs text-muted-foreground">All time</div>
           </Card>
         </div>

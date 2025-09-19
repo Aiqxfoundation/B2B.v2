@@ -87,8 +87,8 @@ export default function ReferralPage() {
               onClick={() => {
                 if (navigator.share) {
                   navigator.share({
-                    title: 'Join GBTC Mining',
-                    text: 'Start mining GBTC with me!',
+                    title: 'Join B2B Mining',
+                    text: 'Start mining B2B with me!',
                     url: referralLink
                   });
                 }

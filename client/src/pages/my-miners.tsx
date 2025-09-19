@@ -139,7 +139,7 @@ export default function MyMiners() {
             <div className="flex items-center space-x-2">
               <Bitcoin className="w-4 h-4 text-[#f7931a] animate-pulse" />
               <div className="text-[11px] text-[#f7931a]/70 font-mono">
-                <span>Active miners earn GBTC • </span>
+                <span>Active miners earn B2B • </span>
                 <span>48h inactivity = inactive status</span>
               </div>
             </div>

@@ -28,7 +28,7 @@ export default function PurchasePowerPage() {
     onSuccess: () => {
       toast({ 
         title: "Hash Power Purchased", 
-        description: `Added ${selectedAmount} GH/s to your GBTC mining power` 
+        description: `Added ${selectedAmount} GH/s to your B2B mining power` 
       });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/global-stats"] });
@@ -105,7 +105,7 @@ export default function PurchasePowerPage() {
             Purchase Hash Power
           </h1>
           <p className="text-orange-200/80 text-lg">
-            Buy mining power to earn <span className="text-orange-400 font-semibold">GBTC</span> rewards
+            Buy mining power to earn <span className="text-orange-400 font-semibold">B2B</span> rewards
           </p>
         </div>
 

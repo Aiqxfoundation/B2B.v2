@@ -5,7 +5,7 @@ import bitcoinLogo from "@assets/file_00000000221c61fab63936953b889556_175663390
 export default function GlobalInfoPage() {
   // Mock data - replace with real API
   const totalMinted = 50; // Initial B2B in circulation
-  const totalSupply = 2100000; // 2.1M B2B total supply
+  const totalSupply = 21000000; // 21M B2B total supply
   const percentMined = (totalMinted / totalSupply) * 100;
   const targetPercent = 25; // 25% target for exchange listing
   
@@ -17,7 +17,7 @@ export default function GlobalInfoPage() {
   
   // Fixed block reward
   const currentBlockReward = 50; // 50 B2B per block
-  const currentBlockHeight = 1 + Math.floor((Date.now() - new Date().setHours(0,0,0,0)) / 3600000); // Increment every hour
+  const currentBlockHeight = 1 + Math.floor((Date.now() - new Date().setHours(0,0,0,0)) / 600000); // Increment every 10 minutes
   
   const getHashrateDisplay = (hashrate: number) => {
     if (hashrate >= 1000000) return `${(hashrate / 1000000).toFixed(3)} PH/s`;
@@ -32,7 +32,7 @@ export default function GlobalInfoPage() {
     registeredUsers: 5432,
     networkHashrate: globalHashrate,
     blockHeight: currentBlockHeight,
-    blocksToday: currentHour, // 1 block per hour, so blocks = hours passed today
+    blocksToday: Math.floor((Date.now() - new Date().setHours(0,0,0,0)) / 600000), // 1 block per 10 minutes
     blockReward: currentBlockReward,
     difficulty: 47.8 + (globalHashrate / 100000) // Dynamic difficulty
   };

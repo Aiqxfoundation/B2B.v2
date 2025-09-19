@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Professional Bitcoin-themed error toast
       toast({
         title: "🔐 Authentication Failed",
-        description: "Invalid username or access key. Please verify your credentials and ensure your access key follows the format: GBTC-XXXXX-XXXXX-XXXXX-XXXXX",
+        description: "Invalid username or access key. Please verify your credentials and ensure your access key follows the format: B2B-XXXXX-XXXXX-XXXXX-XXXXX",
         variant: "destructive",
         className: "border-[#f7931a] bg-gray-900 text-white",
         style: {
@@ -181,8 +181,8 @@ export function useAuth() {
 // Utility function to validate access key format
 export function isValidAccessKey(accessKey: string): boolean {
   try {
-    // GBTC-XXXXX-XXXXX-XXXXX-XXXXX format
-    return /^GBTC-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$/.test(accessKey);
+    // B2B-XXXXX-XXXXX-XXXXX-XXXXX format
+    return /^B2B-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$/.test(accessKey);
   } catch {
     return false;
   }
@@ -190,7 +190,7 @@ export function isValidAccessKey(accessKey: string): boolean {
 
 // Utility function to format access key for display
 export function formatAccessKey(accessKey: string): string {
-  if (accessKey && accessKey.length === 29 && accessKey.startsWith('GBTC-')) {
+  if (accessKey && accessKey.length === 27 && accessKey.startsWith('B2B-')) {
     return accessKey;
   }
   return accessKey;

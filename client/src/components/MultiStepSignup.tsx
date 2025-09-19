@@ -140,7 +140,7 @@ export default function MultiStepSignup({ onBack }: MultiStepSignupProps) {
     if (!generatedAccessKey) return;
     
     const content = `=======================================
-           GBTC ACCESS CREDENTIALS
+           B2B ACCESS CREDENTIALS
 =======================================
 
 Username: ${signupData.username}
@@ -162,7 +162,7 @@ Access Key: ${generatedAccessKey}
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `gbtc-access-key-${signupData.username}.txt`;
+    a.download = `b2b-access-key-${signupData.username}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -220,7 +220,7 @@ Access Key: ${generatedAccessKey}
               <span className="text-4xl font-bold text-black">₿</span>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Create GBTC Account</h1>
+          <h1 className="text-2xl font-bold text-white mb-2">Create B2B Account</h1>
           
           {/* Progress Steps */}
           <div className="space-y-3">

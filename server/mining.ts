@@ -12,14 +12,17 @@ export function setupMining() {
     // Silent retry
   });
   
-  // Daily cycle at 00:00 UTC (24-hour cycles)
-  cron.schedule("0 0 * * *", async () => {
-    // First: Generate block and distribute rewards for the current day
+  // Generate block every 10 minutes (Bitcoin-like timing)
+  cron.schedule("*/10 * * * *", async () => {
+    // Generate block and distribute rewards every 10 minutes
     await generateBlock();
     await distributeRewards();
-    
-    // Then: Reset for the new day and distribute BTC staking rewards
-    await dailyReset();
+  }, {
+    timezone: "UTC"
+  });
+  
+  // Daily BTC staking rewards distribution at 00:00 UTC
+  cron.schedule("0 0 * * *", async () => {
     await distributeBtcStakingRewards();
   }, {
     timezone: "UTC"
@@ -117,8 +120,8 @@ async function initializeSettings() {
 
 async function generateBlock() {
   try {
-    const MAX_SUPPLY = 2100000; // 2.1M GBTC max supply
-    const HALVING_INTERVAL = 4200; // Blocks between halvings
+    const MAX_SUPPLY = 21000000; // 21M B2B max supply
+    const HALVING_INTERVAL = 210000; // Blocks between halvings
     
     // Check if max supply has been reached
     const totalMined = await storage.getTotalMinedSupply();
@@ -156,7 +159,7 @@ async function generateBlock() {
       
       // Block mined successfully
       
-      // Check for halving every 6 months (4,200 blocks at 1 hour per block)
+      // Check for halving every ~4 years (210,000 blocks at 10 minutes per block)
       if (totalBlockHeight % HALVING_INTERVAL === 0 && currentBlockReward > 0) {
         await halveBlockReward();
       }
@@ -248,7 +251,7 @@ async function distributeRewards() {
 
 export async function halveBlockReward() {
   try {
-    const MAX_SUPPLY = 2100000; // 2.1M GBTC max supply
+    const MAX_SUPPLY = 21000000; // 21M B2B max supply
     const totalMined = await storage.getTotalMinedSupply();
     const totalMinedNum = parseFloat(totalMined);
     

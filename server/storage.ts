@@ -788,8 +788,8 @@ export class DatabaseStorage implements IStorage {
     halvingProgress: { current: number; nextHalving: number; blocksRemaining: number };
   }> {
     try {
-      const MAX_SUPPLY = 2100000; // 2.1M B2B max supply
-      const HALVING_INTERVAL = 4200; // Blocks between halvings
+      const MAX_SUPPLY = 21000000; // 21M B2B max supply
+      const HALVING_INTERVAL = 210000; // Blocks between halvings
       
       // Get total mined supply
       const totalMined = await this.getTotalMinedSupply();
@@ -831,11 +831,11 @@ export class DatabaseStorage implements IStorage {
       return {
         totalMined: "0",
         circulating: "0",
-        maxSupply: "2100000",
+        maxSupply: "21000000",
         percentageMined: "0",
         currentBlockReward: "50",
         totalBlocks: 0,
-        halvingProgress: { current: 0, nextHalving: 4200, blocksRemaining: 4200 }
+        halvingProgress: { current: 0, nextHalving: 210000, blocksRemaining: 210000 }
       };
     }
   }

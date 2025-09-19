@@ -72,23 +72,23 @@ export default function Whitepaper() {
             <tbody>
                 <tr>
                     <td>Maximum Supply</td>
-                    <td style="text-align: right; font-weight: bold; color: #fbbf24;">2,100,000 GBTC</td>
+                    <td style="text-align: right; font-weight: bold; color: #fbbf24;">21,000,000 B2B</td>
                 </tr>
                 <tr>
                     <td>Block Time</td>
-                    <td style="text-align: right; color: #fbbf24;">1 hour</td>
+                    <td style="text-align: right; color: #fbbf24;">10 minutes</td>
                 </tr>
                 <tr>
                     <td>Blocks per Day</td>
-                    <td style="text-align: right; color: #fbbf24;">24</td>
+                    <td style="text-align: right; color: #fbbf24;">144</td>
                 </tr>
                 <tr>
                     <td>Halving Interval</td>
-                    <td style="text-align: right; color: #fbbf24;">4,200 blocks (~6 months)</td>
+                    <td style="text-align: right; color: #fbbf24;">210,000 blocks (~4 years)</td>
                 </tr>
                 <tr>
                     <td>Initial Block Reward</td>
-                    <td style="text-align: right; font-weight: bold; color: #fbbf24;">50 GBTC</td>
+                    <td style="text-align: right; font-weight: bold; color: #fbbf24;">50 B2B</td>
                 </tr>
             </tbody>
         </table>
@@ -110,35 +110,35 @@ export default function Whitepaper() {
                     <td>Launch</td>
                     <td style="text-align: center;">0</td>
                     <td style="text-align: center;">Month 0</td>
-                    <td style="text-align: right; font-weight: bold; color: #fbbf24;">50 GBTC</td>
+                    <td style="text-align: right; font-weight: bold; color: #fbbf24;">50 B2B</td>
                 </tr>
                 <tr>
                     <td>1st Halving</td>
-                    <td style="text-align: center;">4,200</td>
-                    <td style="text-align: center;">~6 months</td>
-                    <td style="text-align: right; color: #fbbf24;">25 GBTC</td>
+                    <td style="text-align: center;">210,000</td>
+                    <td style="text-align: center;">~4 years</td>
+                    <td style="text-align: right; color: #fbbf24;">25 B2B</td>
                 </tr>
                 <tr>
                     <td>2nd Halving</td>
-                    <td style="text-align: center;">8,400</td>
-                    <td style="text-align: center;">~12 months</td>
-                    <td style="text-align: right; color: #fbbf24;">12.5 GBTC</td>
+                    <td style="text-align: center;">420,000</td>
+                    <td style="text-align: center;">~8 years</td>
+                    <td style="text-align: right; color: #fbbf24;">12.5 B2B</td>
                 </tr>
                 <tr>
                     <td>3rd Halving</td>
-                    <td style="text-align: center;">12,600</td>
-                    <td style="text-align: center;">~18 months</td>
-                    <td style="text-align: right; color: #888;">6.25 GBTC</td>
+                    <td style="text-align: center;">630,000</td>
+                    <td style="text-align: center;">~12 years</td>
+                    <td style="text-align: right; color: #888;">6.25 B2B</td>
                 </tr>
                 <tr>
                     <td>4th Halving</td>
-                    <td style="text-align: center;">16,800</td>
-                    <td style="text-align: center;">~24 months</td>
-                    <td style="text-align: right; color: #888;">3.125 GBTC</td>
+                    <td style="text-align: center;">840,000</td>
+                    <td style="text-align: center;">~16 years</td>
+                    <td style="text-align: right; color: #888;">3.125 B2B</td>
                 </tr>
             </tbody>
         </table>
-        <p style="font-size: 12px; color: #888; margin-top: 16px;">Halving continues every 4,200 blocks until max supply is reached</p>
+        <p style="font-size: 12px; color: #888; margin-top: 16px;">Halving continues every 210,000 blocks until max supply is reached</p>
     </div>
     
     <div class="section">
@@ -146,7 +146,7 @@ export default function Whitepaper() {
         <div style="margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                 <span style="font-size: 14px; color: #888;">Year 1</span>
-                <span style="font-size: 14px; font-weight: bold; color: #fbbf24;">~315,000 GBTC</span>
+                <span style="font-size: 14px; font-weight: bold; color: #fbbf24;">~7,560,000 B2B</span>
             </div>
             <div class="progress-bar">
                 <div class="progress-fill" style="width: 15%;"></div>
@@ -155,7 +155,7 @@ export default function Whitepaper() {
         <div style="margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                 <span style="font-size: 14px; color: #888;">Year 2</span>
-                <span style="font-size: 14px; font-weight: bold; color: #fbbf24;">~393,750 GBTC</span>
+                <span style="font-size: 14px; font-weight: bold; color: #fbbf24;">~10,500,000 B2B</span>
             </div>
             <div class="progress-bar">
                 <div class="progress-fill" style="width: 19%;"></div>
@@ -164,7 +164,7 @@ export default function Whitepaper() {
         <div style="margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                 <span style="font-size: 14px; color: #888;">Year 5</span>
-                <span style="font-size: 14px; font-weight: bold; color: #fbbf24;">~1,000,000 GBTC</span>
+                <span style="font-size: 14px; font-weight: bold; color: #fbbf24;">~18,375,000 B2B</span>
             </div>
             <div class="progress-bar">
                 <div class="progress-fill" style="width: 48%;"></div>
@@ -173,7 +173,7 @@ export default function Whitepaper() {
         <div style="margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                 <span style="font-size: 14px; color: #888;">Year 10+</span>
-                <span style="font-size: 14px; font-weight: bold; color: #f7931a;">2,100,000 GBTC</span>
+                <span style="font-size: 14px; font-weight: bold; color: #f7931a;">21,000,000 B2B</span>
             </div>
             <div class="progress-bar">
                 <div class="progress-fill" style="width: 100%;"></div>
@@ -206,7 +206,7 @@ export default function Whitepaper() {
                 </div>
                 <div>
                     <h4 style="margin: 0;">TGE Milestone</h4>
-                    <p style="font-size: 12px; color: #888; margin: 4px 0;">Official GBTC release at network milestone</p>
+                    <p style="font-size: 12px; color: #888; margin: 4px 0;">Official B2B release at network milestone</p>
                 </div>
             </div>
             
@@ -242,18 +242,18 @@ export default function Whitepaper() {
     <div class="section">
         <h2>🔄 P2P Transfer & Trading (Pre-TGE)</h2>
         <div style="background: #1a1a1a; padding: 16px; border-radius: 8px; border: 1px solid #f7931a; margin-bottom: 16px;">
-            <h3>Trade GBTC Before Official Launch</h3>
-            <p style="font-size: 14px;">GBTC supports peer-to-peer transfers between users, enabling an organic secondary market before the Token Generation Event. This creates immediate liquidity and price discovery during the mining phase.</p>
+            <h3>Trade B2B Before Official Launch</h3>
+            <p style="font-size: 14px;">B2B supports peer-to-peer transfers between users, enabling an organic secondary market before the Token Generation Event. This creates immediate liquidity and price discovery during the mining phase.</p>
         </div>
         
         <div class="feature" style="margin-bottom: 16px;">
             <h4>▶ Instant P2P Transfers</h4>
-            <p style="font-size: 14px; color: #888;">Send GBTC directly to any user within the platform using their username. Transfers are instant and secure.</p>
+            <p style="font-size: 14px; color: #888;">Send B2B directly to any user within the platform using their username. Transfers are instant and secure.</p>
         </div>
         
         <div class="feature" style="margin-bottom: 16px;">
             <h4>▶ Self-Managed Trading</h4>
-            <p style="font-size: 14px; color: #888;">Create your own ask/bid prices for GBTC based on personal deals:</p>
+            <p style="font-size: 14px; color: #888;">Create your own ask/bid prices for B2B based on personal deals:</p>
             <ul style="font-size: 12px; color: #888;">
                 <li>• Negotiate prices directly with other miners</li>
                 <li>• Execute trades through P2P transfers</li>
@@ -278,7 +278,7 @@ export default function Whitepaper() {
         
         <div class="metric" style="text-align: center; background: linear-gradient(135deg, rgba(247,147,26,0.2), rgba(251,191,36,0.2));">
             <p style="color: #f7931a; font-weight: bold; font-size: 14px;">⚡ P2P Market Active Now</p>
-            <p style="color: #888; font-size: 12px; margin-top: 4px;">Start trading GBTC with other miners - No waiting for TGE!</p>
+            <p style="color: #888; font-size: 12px; margin-top: 4px;">Start trading B2B with other miners - No waiting for TGE!</p>
         </div>
     </div>
     
@@ -297,12 +297,12 @@ export default function Whitepaper() {
         
         <div class="feature" style="margin-bottom: 16px;">
             <h4>▶ Bridge Utility</h4>
-            <p style="font-size: 14px; color: #888;">Seamlessly move GBTC between chains for maximum flexibility</p>
+            <p style="font-size: 14px; color: #888;">Seamlessly move B2B between chains for maximum flexibility</p>
         </div>
         
         <div class="feature" style="margin-bottom: 16px;">
             <h4>▶ BTC Relationship</h4>
-            <p style="font-size: 14px; color: #888;">10x rarer than Bitcoin (2.1M vs 21M), optimized for DeFi adoption</p>
+            <p style="font-size: 14px; color: #888;">Same max supply as Bitcoin (21M vs 21M), optimized for DeFi adoption</p>
         </div>
     </div>
     
@@ -322,7 +322,7 @@ export default function Whitepaper() {
             <div class="feature">
                 <h4>🕐 Block Cycles</h4>
                 <ul style="font-size: 14px; color: #888;">
-                    <li>• 24 blocks per day</li>
+                    <li>• 144 blocks per day</li>
                     <li>• Reset at 00:00 UTC</li>
                     <li>• Continuous height</li>
                     <li>• Predictable schedule</li>
@@ -405,7 +405,7 @@ export default function Whitepaper() {
     // Create a download link
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'GBTC_Whitepaper.html';
+    link.download = 'B2B_Whitepaper.html';
     
     // Trigger the download
     document.body.appendChild(link);
@@ -525,23 +525,23 @@ export default function Whitepaper() {
                   <tbody className="text-gray-300">
                     <tr className="border-b border-[#333]/50">
                       <td className="py-3">Maximum Supply</td>
-                      <td className="text-right font-bold text-[#fbbf24]">2,100,000 GBTC</td>
+                      <td className="text-right font-bold text-[#fbbf24]">21,000,000 B2B</td>
                     </tr>
                     <tr className="border-b border-[#333]/50">
                       <td className="py-3">Block Time</td>
-                      <td className="text-right text-[#fbbf24]">1 hour</td>
+                      <td className="text-right text-[#fbbf24]">10 minutes</td>
                     </tr>
                     <tr className="border-b border-[#333]/50">
                       <td className="py-3">Blocks per Day</td>
-                      <td className="text-right text-[#fbbf24]">24</td>
+                      <td className="text-right text-[#fbbf24]">144</td>
                     </tr>
                     <tr className="border-b border-[#333]/50">
                       <td className="py-3">Halving Interval</td>
-                      <td className="text-right text-[#fbbf24]">4,200 blocks (~6 months)</td>
+                      <td className="text-right text-[#fbbf24]">210,000 blocks (~4 years)</td>
                     </tr>
                     <tr>
                       <td className="py-3">Initial Block Reward</td>
-                      <td className="text-right font-bold text-[#fbbf24]">50 GBTC</td>
+                      <td className="text-right font-bold text-[#fbbf24]">50 B2B</td>
                     </tr>
                   </tbody>
                 </table>
@@ -578,38 +578,38 @@ export default function Whitepaper() {
                       <td className="py-2">Launch</td>
                       <td className="text-center">0</td>
                       <td className="text-center">Month 0</td>
-                      <td className="text-right font-bold text-[#fbbf24]">50 GBTC</td>
+                      <td className="text-right font-bold text-[#fbbf24]">50 B2B</td>
                     </tr>
                     <tr className="border-b border-[#333]/50">
                       <td className="py-2">1st Halving</td>
-                      <td className="text-center">4,200</td>
+                      <td className="text-center">210,000</td>
                       <td className="text-center">~6 months</td>
-                      <td className="text-right text-[#fbbf24]">25 GBTC</td>
+                      <td className="text-right text-[#fbbf24]">25 B2B</td>
                     </tr>
                     <tr className="border-b border-[#333]/50">
                       <td className="py-2">2nd Halving</td>
                       <td className="text-center">8,400</td>
                       <td className="text-center">~12 months</td>
-                      <td className="text-right text-[#fbbf24]">12.5 GBTC</td>
+                      <td className="text-right text-[#fbbf24]">12.5 B2B</td>
                     </tr>
                     <tr className="border-b border-[#333]/50">
                       <td className="py-2">3rd Halving</td>
                       <td className="text-center">12,600</td>
                       <td className="text-center">~18 months</td>
-                      <td className="text-right text-gray-400">6.25 GBTC</td>
+                      <td className="text-right text-gray-400">6.25 B2B</td>
                     </tr>
                     <tr>
                       <td className="py-2">4th Halving</td>
                       <td className="text-center">16,800</td>
                       <td className="text-center">~24 months</td>
-                      <td className="text-right text-gray-400">3.125 GBTC</td>
+                      <td className="text-right text-gray-400">3.125 B2B</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
               
               <p className="text-xs text-gray-400 mt-4">
-                Halving continues every 4,200 blocks until max supply is reached
+                Halving continues every 210,000 blocks until max supply is reached
               </p>
             </div>
           </Card>
@@ -632,7 +632,7 @@ export default function Whitepaper() {
                 <div>
                   <div className="flex justify-between mb-1">
                     <span className="text-sm text-gray-400">Year 1</span>
-                    <span className="text-sm font-bold text-[#fbbf24]">~315,000 GBTC</span>
+                    <span className="text-sm font-bold text-[#fbbf24]">~315,000 B2B</span>
                   </div>
                   <div className="w-full bg-[#1a1a1a] rounded-full h-3">
                     <div className="bg-gradient-to-r from-[#f7931a] to-[#fbbf24] h-3 rounded-full" style={{width: '15%'}}></div>
@@ -642,7 +642,7 @@ export default function Whitepaper() {
                 <div>
                   <div className="flex justify-between mb-1">
                     <span className="text-sm text-gray-400">Year 2</span>
-                    <span className="text-sm font-bold text-[#fbbf24]">~393,750 GBTC</span>
+                    <span className="text-sm font-bold text-[#fbbf24]">~393,750 B2B</span>
                   </div>
                   <div className="w-full bg-[#1a1a1a] rounded-full h-3">
                     <div className="bg-gradient-to-r from-[#f7931a] to-[#fbbf24] h-3 rounded-full" style={{width: '19%'}}></div>
@@ -652,7 +652,7 @@ export default function Whitepaper() {
                 <div>
                   <div className="flex justify-between mb-1">
                     <span className="text-sm text-gray-400">Year 5</span>
-                    <span className="text-sm font-bold text-[#fbbf24]">~1,000,000 GBTC</span>
+                    <span className="text-sm font-bold text-[#fbbf24]">~1,000,000 B2B</span>
                   </div>
                   <div className="w-full bg-[#1a1a1a] rounded-full h-3">
                     <div className="bg-gradient-to-r from-[#f7931a] to-[#fbbf24] h-3 rounded-full" style={{width: '48%'}}></div>
@@ -662,7 +662,7 @@ export default function Whitepaper() {
                 <div>
                   <div className="flex justify-between mb-1">
                     <span className="text-sm text-gray-400">Year 10+</span>
-                    <span className="text-sm font-bold text-[#f7931a]">2,100,000 GBTC</span>
+                    <span className="text-sm font-bold text-[#f7931a]">21,000,000 B2B</span>
                   </div>
                   <div className="w-full bg-[#1a1a1a] rounded-full h-3">
                     <div className="bg-gradient-to-r from-[#f7931a] to-[#fbbf24] h-3 rounded-full" style={{width: '100%'}}></div>
@@ -715,7 +715,7 @@ export default function Whitepaper() {
                   </div>
                   <div>
                     <h4 className="text-[#fbbf24] font-semibold mb-1">TGE Milestone</h4>
-                    <p className="text-xs text-gray-400">Official GBTC release at network milestone</p>
+                    <p className="text-xs text-gray-400">Official B2B release at network milestone</p>
                   </div>
                 </div>
                 
@@ -797,9 +797,9 @@ export default function Whitepaper() {
               </div>
               
               <div className="bg-gradient-to-br from-[#1a1a1a] to-black p-4 rounded-lg border border-[#f7931a]/30 mb-4">
-                <h3 className="text-lg font-bold text-[#fbbf24] mb-2">Trade GBTC Before Official Launch</h3>
+                <h3 className="text-lg font-bold text-[#fbbf24] mb-2">Trade B2B Before Official Launch</h3>
                 <p className="text-sm text-gray-300 mb-3">
-                  GBTC supports peer-to-peer transfers between users, enabling an organic secondary market before the Token Generation Event. This creates immediate liquidity and price discovery during the mining phase.
+                  B2B supports peer-to-peer transfers between users, enabling an organic secondary market before the Token Generation Event. This creates immediate liquidity and price discovery during the mining phase.
                 </p>
               </div>
               
@@ -810,7 +810,7 @@ export default function Whitepaper() {
                     <h3 className="font-semibold text-[#fbbf24]">Instant P2P Transfers</h3>
                   </div>
                   <p className="text-sm text-gray-400">
-                    Send GBTC directly to any user within the platform using their username. Transfers are instant and secure.
+                    Send B2B directly to any user within the platform using their username. Transfers are instant and secure.
                   </p>
                 </div>
                 
@@ -820,7 +820,7 @@ export default function Whitepaper() {
                     <h3 className="font-semibold text-[#fbbf24]">Self-Managed Trading</h3>
                   </div>
                   <p className="text-sm text-gray-400 mb-2">
-                    Create your own ask/bid prices for GBTC based on personal deals:
+                    Create your own ask/bid prices for B2B based on personal deals:
                   </p>
                   <ul className="text-xs text-gray-500 space-y-1 ml-4">
                     <li>• Negotiate prices directly with other miners</li>
@@ -853,7 +853,7 @@ export default function Whitepaper() {
                   ⚡ P2P Market Active Now
                 </p>
                 <p className="text-center text-xs text-gray-400 mt-1">
-                  Start trading GBTC with other miners - No waiting for TGE!
+                  Start trading B2B with other miners - No waiting for TGE!
                 </p>
               </div>
             </div>
@@ -900,7 +900,7 @@ export default function Whitepaper() {
                     <h3 className="font-semibold text-[#fbbf24]">Bridge Utility</h3>
                   </div>
                   <p className="text-sm text-gray-400">
-                    Seamlessly move GBTC between chains for maximum flexibility
+                    Seamlessly move B2B between chains for maximum flexibility
                   </p>
                 </div>
                 
@@ -951,7 +951,7 @@ export default function Whitepaper() {
                     <h3 className="font-semibold text-[#fbbf24]">Block Cycles</h3>
                   </div>
                   <ul className="text-sm text-gray-400 space-y-1">
-                    <li>• 24 blocks per day</li>
+                    <li>• 144 blocks per day</li>
                     <li>• Reset at 00:00 UTC</li>
                     <li>• Continuous height</li>
                     <li>• Predictable schedule</li>

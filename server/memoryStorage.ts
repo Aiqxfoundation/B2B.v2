@@ -943,8 +943,8 @@ export class MemoryStorage implements IStorage {
     totalBlocks: number;
     halvingProgress: { current: number; nextHalving: number; blocksRemaining: number };
   }> {
-    const MAX_SUPPLY = 2100000; // 2.1M GBTC max supply
-    const HALVING_INTERVAL = 4200; // Blocks between halvings
+    const MAX_SUPPLY = 21000000; // 21M B2B max supply
+    const HALVING_INTERVAL = 210000; // Blocks between halvings
     
     // Get total mined supply
     const totalMined = await this.getTotalMinedSupply();
